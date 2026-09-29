@@ -58,7 +58,7 @@ its use may violate Riot Games’ Terms of Service.
   
   A short walkthrough of the application's features and workflow can be found in the showcase video below.
   This video may not represent the latest state of the app:
-  [Showcase Video](https://youtu.be/Pxiy_7opG3E)
+  [Showcase Video](https://youtu.be/W_k5N2hS7fg)
 </details>
 <details>
   <summary>How It Works</summary>
