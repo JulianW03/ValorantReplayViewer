@@ -34,11 +34,10 @@ export class ProductSessionRCUAdapter extends RCUDataAdapter<ProductSessionManag
         switch (type) {
             case RCUMessageType.CREATE:
             case RCUMessageType.UPDATE: {
-                this.logger.log(match);
                 const typedData = data as unknown as ProductSessionSession;
                 const sessionId = match['sessionId'];
                 if (this.manager.getKeyView(sessionId) === null) {
-                    this.logger.log(
+                    this.logger.debug(
                         `Registering new product session with ID: ${sessionId}`,
                         typedData,
                     );
@@ -48,7 +47,7 @@ export class ProductSessionRCUAdapter extends RCUDataAdapter<ProductSessionManag
             }
             case RCUMessageType.DELETE: {
                 const sessionId = match['sessionId'];
-                this.logger.log(
+                this.logger.debug(
                     `Unregistering product session with ID: ${sessionId}`,
                 );
                 this.manager.deleteKey(sessionId);

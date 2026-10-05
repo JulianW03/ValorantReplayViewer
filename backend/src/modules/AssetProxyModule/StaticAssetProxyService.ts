@@ -29,7 +29,6 @@ export class StaticAssetProxyService {
             throw new Error(`Host not allowed: ${parsed.hostname}`);
         }
 
-        this.logger.debug(`Fetching and caching: ${rawUrl}`);
         const response = await fetch(rawUrl);
         if (!response.ok) {
             throw new Error(`Upstream returned ${response.status} for ${rawUrl}`);

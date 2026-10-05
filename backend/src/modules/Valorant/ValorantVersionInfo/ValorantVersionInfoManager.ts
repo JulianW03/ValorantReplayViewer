@@ -92,7 +92,7 @@ export class ValorantVersionInfoManager implements IObjectDataManager<MinimalVer
             return;
         }
         const newRetryCount = retryIterations - 1;
-        this.logger.debug('Retrying to fetch version info after timeout, iterations remaining', newRetryCount);
+        this.logger.debug(`Retrying to fetch version info after timeout, iterations remaining: ${newRetryCount}`);
         this.timeoutHandle = setTimeout(() => {
             this.loadAndSetState(newRetryCount);
         }, this.config.configurations['valorant-version-read']['retry-timeout-ms']);

@@ -1,7 +1,7 @@
 {
   "version": {
     "config": 1,
-    "app": "0.9.0-pre"
+    "app": "0.10.0-pre"
   },
   "filepaths": {
     "riot-games-folder": {
@@ -22,7 +22,8 @@
     "app": {
       "port": 3000,
       "logging": {
-        "levels": ["log", "error", "warn"]
+        "levels": ["log", "error", "warn"],
+        "max-log-files": 10
       },
       "additional-cors-origins": []
     },
