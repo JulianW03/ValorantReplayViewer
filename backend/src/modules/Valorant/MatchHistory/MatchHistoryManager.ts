@@ -149,6 +149,7 @@ export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModul
 
         const index = this.orderedMatchIds.indexOf(afterMatchId);
         if (index === -1) {
+            this.logger.warn('Requested matches after an unknown match')
             /**
              * TODO:
              * This should propagate as an error probably to make it clear to the client that the requests must be done
@@ -162,6 +163,7 @@ export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModul
         const missing = limit - available;
 
         if (missing > 0 && !this.remoteMatchHistoryEndReached) {
+            this.logger.debug(`Must fetch ${missing} matches because the requested ones are not yet known`)
             await this.loadMore(Math.min(missing, 20));
         }
 
@@ -187,6 +189,7 @@ export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModul
         const index = this.orderedMatchIds.indexOf(beforeMatchId);
 
         if (index === -1) {
+            this.logger.warn("Requested matches before an unknown match");
             return [];
         }
 

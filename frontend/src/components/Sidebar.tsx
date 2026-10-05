@@ -20,6 +20,7 @@ import { GameStatusPanel } from '@/components/GameStatusPanel';
 import { cn } from '@/lib/utils';
 import { ShutdownButton } from '@/components/ShutdownButton';
 import { Separator } from '@/components/ui/separator.tsx';
+import { SimpleLogo } from '@/components/icons/SimpleLogo';
 
 const replayNavItems = [
     { title: 'Saved Matches', path: '/saved', icon: HardDrive },
@@ -37,9 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Sidebar variant="inset" {...props}>
             <SidebarHeader>
                 <div className="flex items-center gap-2.5 px-2 py-1.5">
-                    {/*<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">*/}
-                    {/*    <Zap className="size-4 text-primary-foreground" />*/}
-                    {/*</div>*/}
+                    <SimpleLogo className="size-8 shrink-0" />
                     <div>
                         <p className="text-sm font-semibold leading-none">VRV</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">Valorant Replay Viewer</p>

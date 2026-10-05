@@ -8,6 +8,7 @@ import 'reflect-metadata';
 import { ShutdownManager } from '@/modules/ShutdownModule/ShutdownManager';
 import { SYMBOL_CONFIG } from '@/config/configLoader';
 import { EnvConfigV1DTO, LogLevelSchema } from '@/config/ConfigV1.schema';
+import { WinstonNestLogger } from '@/core/logging/WinstonNestLogger';
 
 async function bootstrap() {
     const isDev = process.env.NODE_ENV === 'development';
@@ -24,13 +25,7 @@ async function bootstrap() {
     });
     const configuration = app.get<EnvConfigV1DTO>(SYMBOL_CONFIG);
     setupLogger.log("Done with Nest Setup, Switching to configured logging mechanism now.")
-    app.useLogger(
-        new ConsoleLogger({
-            logLevels: isDev
-                ? [LogLevelSchema.enum.log, LogLevelSchema.enum.error, LogLevelSchema.enum.warn, LogLevelSchema.enum.debug, LogLevelSchema.enum.verbose]
-                : configuration.configurations.app.logging.levels,
-        }),
-    );
+    app.useLogger(app.get(WinstonNestLogger));
 
     const configuredPort = configuration.configurations.app.port;
     const corsOrigin = [`http://127.0.0.1:${configuredPort}`, `http://localhost:${configuredPort}`, ...configuration.configurations.app['additional-cors-origins']];

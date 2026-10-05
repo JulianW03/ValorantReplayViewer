@@ -7,7 +7,7 @@ export const PaginationQuerySchema = z.object({
 
 export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
 
-export const PaginationResultSchema = <T extends z.ZodTypeAny>(item: T) => z.object({
+export const PaginationResultSchema = <T extends z.ZodType>(item: T) => z.object({
     data: z.array(item),
     page: z.number(),
     pageSize: z.number(),

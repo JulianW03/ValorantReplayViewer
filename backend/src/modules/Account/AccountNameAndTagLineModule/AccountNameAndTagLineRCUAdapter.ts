@@ -68,7 +68,7 @@ export class AccountNameAndTagLineRCUAdapter extends RCUDataAdapter<AccountNameA
         if (!resp || resp.status !== HttpStatus.OK) return;
         if (this.manager.getView() === null) {
             this.logger.log(
-                'Setting initial entitlement token state',
+                'Setting initial account name and tag line',
                 resp.data,
             );
             this.manager.updateValue(resp.data);

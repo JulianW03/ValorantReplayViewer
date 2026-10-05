@@ -79,6 +79,8 @@ export type VersionReadConfiguration = z.infer<typeof VersionReadConfiguration>;
 
 export const LoggingConfigurationSchema = z.object({
     levels: z.array(LogLevelSchema),
+    'file-levels': z.array(LogLevelSchema).optional(),
+    'max-log-files': z.number().int().positive().default(10),
 });
 export type LoggingConfiguration = z.infer<typeof LoggingConfigurationSchema>;
 

@@ -26,6 +26,7 @@ import { AccountPuuidModule } from '@/modules/Account/AccountPuuidModule/Account
 import { ValorantMatchHistoryModule } from '@/modules/Valorant/MatchHistory/MatchHistoryModule';
 import { SocialPresenceModule } from '@/modules/SocialPresence/SocialPresenceModule';
 import { PathProviderModule } from '@/modules/PathProvider/PathProviderModule';
+import { LoggingModule } from '@/core/logging/LoggingModule';
 
 export const APP = Symbol('APP');
 
@@ -58,7 +59,8 @@ export const APP = Symbol('APP');
         ShutdownModule,
         EventBusModule,
         ReplayModule,
-        PathProviderModule
+        PathProviderModule,
+        LoggingModule,
     ],
 })
 export class AppModule {
