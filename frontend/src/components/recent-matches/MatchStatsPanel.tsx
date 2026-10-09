@@ -62,6 +62,7 @@ export function MatchStatsPanel({ matchId }: MatchStatsPanelProps) {
         );
     }
 
+
     if (stats.type === 'FAILURE') {
         return (
             <div className="border-t border-border/50 px-4 pb-4 pt-3 flex items-center justify-between">

@@ -54,8 +54,6 @@ const PlayerPick = ({
     selected: boolean;
     children: React.ReactNode;
 }) => (
-    // No onClick: SlantedDisplay's item wrapper already handles it. The button is here
-    // for focus — Enter/Space fire a click that bubbles up to that wrapper.
     <button
         type={'button'}
         aria-pressed={selected}
@@ -131,10 +129,9 @@ const TeamStrip = ({
 
 interface StatRowProps {
     label: string;
-    left: number;
-    right: number;
-    leftLabel?: string;
-    rightLabel?: string;
+    left: number | undefined;
+    right: number | undefined;
+    format?: (value: number) => React.ReactNode;
     leftTeam: TWO_TEAMS_TEAM_ID;
     rightTeam: TWO_TEAMS_TEAM_ID;
     lowerIsBetter?: boolean;
@@ -144,14 +141,15 @@ const StatRow = ({
                      label,
                      left,
                      right,
-                     leftLabel,
-                     rightLabel,
+                     format = (value) => value,
                      leftTeam,
                      rightTeam,
                      lowerIsBetter = false,
                  }: StatRowProps) => {
-    const leftLeads = lowerIsBetter ? left < right : left > right;
-    const rightLeads = lowerIsBetter ? right < left : right > left;
+    const comparable = left !== undefined && right !== undefined;
+    const leftLeads = comparable && (lowerIsBetter ? left < right : left > right);
+    const rightLeads = comparable && (lowerIsBetter ? right < left : right > left);
+    const display = (value: number | undefined) => (value === undefined ? '–' : format(value));
 
     return (
         <div className={'grid grid-cols-3 items-center gap-3 py-1.5'}>
@@ -161,7 +159,7 @@ const StatRow = ({
                     leftLeads ? cn('font-semibold', TEAM_STYLES[leftTeam].text) : 'text-muted-foreground',
                 )}
             >
-                {leftLabel ?? number0(left)}
+                {display(left)}
             </span>
             <span className={'text-center text-xs text-muted-foreground'}>{label}</span>
             <span
@@ -170,7 +168,7 @@ const StatRow = ({
                     rightLeads ? cn('font-semibold', TEAM_STYLES[rightTeam].text) : 'text-muted-foreground',
                 )}
             >
-                {rightLabel ?? number0(right)}
+                {display(right)}
             </span>
         </div>
     );
@@ -198,7 +196,7 @@ const DuelRow = ({
     right: VersusPlayerStats;
 }) => {
     const winner = event.winner === left.subject ? left : right;
-    const weapon = useWeaponRegistry()?.[event.weaponId?.toLowerCase() ?? ""];
+    const weapon = useWeaponRegistry()?.[event.weaponId?.toLowerCase() ?? ''];
 
     return (
         <TableRow>
@@ -294,7 +292,9 @@ export function VersusTab({ data }: VersusTabProps) {
                         </CardHeader>
                         <CardContent className={'space-y-4'}>
                             <div className={'text-center'}>
-                                <div className={'text-xs uppercase tracking-wide text-muted-foreground'}>Kills on each other</div>
+                                <div className={'text-xs uppercase tracking-wide text-muted-foreground'}>Kills on each
+                                    other
+                                </div>
                                 <div className={'mt-1 grid grid-cols-3 items-baseline gap-3'}>
                                     <span
                                         className={cn('text-right text-4xl font-bold tabular-nums', TEAM_STYLES[left.teamId].text)}>
@@ -313,8 +313,8 @@ export function VersusTab({ data }: VersusTabProps) {
                                 <StatRow label={'Assisted kills'} left={duels.a.assisted} right={duels.b.assisted}
                                          leftTeam={left.teamId} rightTeam={right.teamId} />
                                 <StatRow label={'Damage dealt'} left={duels.a.damage.damage}
-                                         right={duels.b.damage.damage} leftTeam={left.teamId}
-                                         rightTeam={right.teamId} />
+                                         right={duels.b.damage.damage} format={number0}
+                                         leftTeam={left.teamId} rightTeam={right.teamId} />
                             </div>
 
                             <div className={'flex items-center justify-end gap-2'}>
@@ -380,8 +380,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'KDA'}
                                             left={left.kda}
                                             right={right.kda}
-                                            leftLabel={number2(left.kda)}
-                                            rightLabel={number2(right.kda)}
+                                            format={number2}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -408,8 +407,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Combat score'}
                                             left={left.acs}
                                             right={right.acs}
-                                            leftLabel={number0(left.acs)}
-                                            rightLabel={number0(right.acs)}
+                                            format={number0}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -417,8 +415,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Damage / round'}
                                             left={left.adr}
                                             right={right.adr}
-                                            leftLabel={number0(left.adr)}
-                                            rightLabel={number0(right.adr)}
+                                            format={number0}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -426,8 +423,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Headshot %'}
                                             left={left.headshotPct}
                                             right={right.headshotPct}
-                                            leftLabel={percent(left.headshotPct)}
-                                            rightLabel={percent(right.headshotPct)}
+                                            format={percent}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -435,8 +431,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Survived'}
                                             left={left.survivalRate}
                                             right={right.survivalRate}
-                                            leftLabel={percent(left.survivalRate)}
-                                            rightLabel={percent(right.survivalRate)}
+                                            format={percent}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -463,8 +458,7 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Avg loadout value'}
                                             left={left.avgLoadoutValue}
                                             right={right.avgLoadoutValue}
-                                            leftLabel={number0(left.avgLoadoutValue)}
-                                            rightLabel={number0(right.avgLoadoutValue)}
+                                            format={number0}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
@@ -472,11 +466,88 @@ export function VersusTab({ data }: VersusTabProps) {
                                             label={'Avg spend'}
                                             left={left.avgSpend}
                                             right={right.avgSpend}
-                                            leftLabel={number0(left.avgSpend)}
-                                            rightLabel={number0(right.avgSpend)}
+                                            format={number0}
                                             leftTeam={left.teamId}
                                             rightTeam={right.teamId}
                                         />
+                                    </AccordionContent>
+                                </AccordionItem>
+
+                                <AccordionItem value={'performance'} className={'border-b-0'}>
+                                    <AccordionTrigger className={'text-sm'}>Performance</AccordionTrigger>
+                                    <AccordionContent>
+                                        <StatRow
+                                            label={'Performance Score'}
+                                            left={left.performance?.totalScore}
+                                            right={right.performance?.totalScore}
+                                            format={number0}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Damage score'}
+                                            left={left.performance?.fightStats?.damage?.value}
+                                            right={right.performance?.fightStats?.damage?.value}
+                                            format={number0}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Trade score'}
+                                            left={left.performance?.fightStats?.trades?.value}
+                                            right={right.performance?.fightStats?.trades?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Kill impact'}
+                                            left={left.performance?.fightStats?.kills_adj?.value}
+                                            right={right.performance?.fightStats?.kills_adj?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Death impact'}
+                                            left={left.performance?.fightStats?.deaths_adj?.value}
+                                            right={right.performance?.fightStats?.deaths_adj?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Assist score'}
+                                            left={left.performance?.supportStats?.assists?.value}
+                                            right={right.performance?.supportStats?.assists?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Utility score'}
+                                            left={left.performance?.supportStats?.utilityUsage?.value}
+                                            right={right.performance?.supportStats?.utilityUsage?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
+                                        <StatRow
+                                            label={'Plant score'}
+                                            left={left.performance?.supportStats?.plants?.value}
+                                            right={right.performance?.supportStats?.plants?.value}
+                                            format={number2}
+                                            leftTeam={left.teamId}
+                                            rightTeam={right.teamId}
+                                        />
+
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>

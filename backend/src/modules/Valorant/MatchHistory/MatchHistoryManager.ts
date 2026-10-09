@@ -112,7 +112,7 @@ export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModul
          * We use the fact that we (hopefully) have received new matches and therefore
          * have our offset into the pagination as a nice side effect.
          * */
-        const page = await this.riot.getMatchHistory(
+        const page = await this.riot.matches.getHistory(
             this.orderedMatchIds.length,
             this.orderedMatchIds.length + count,
         );
