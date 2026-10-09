@@ -1,7 +1,7 @@
 {
   "version": {
     "config": 1,
-    "app": "0.10.0-pre"
+    "app": "0.9.1"
   },
   "filepaths": {
     "riot-games-folder": {
