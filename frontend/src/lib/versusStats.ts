@@ -6,6 +6,8 @@ import {
 } from '#/schemas/RiotMatchApiReponseDTO.ts';
 import type { GUID } from '#/schemas/GUIDSchema.ts';
 import type { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
+import { NamedStatsBlock, NamedStatsBlockSchema } from '@/lib/ScoringUtils.ts';
+import z from 'zod'
 
 type Match = RiotMatchApiResponseDTO;
 export type RoundResult = Match['roundResults'][number];
@@ -118,6 +120,8 @@ export interface VersusPlayerStats {
     avgLoadoutValue: number;
     avgSpend: number;
     ultimateCasts: number;
+
+    performance: z.infer<typeof NamedStatsBlock> | null
 }
 
 export function buildPlayerStats(index: MatchIndex, subject: GUID): VersusPlayerStats {
@@ -184,6 +188,12 @@ export function buildPlayerStats(index: MatchIndex, subject: GUID): VersusPlayer
     const multiKills = [...killsPerRound.values()];
     const name = displayName(index, subject);
 
+    const optStatsBlock = NamedStatsBlockSchema.safeParse(player.scores);
+    const statsBlock = optStatsBlock.success ? optStatsBlock.data : null;
+
+    console.log(player.scores)
+    console.log(optStatsBlock.error)
+
     return {
         subject,
         teamId: player.teamId as TWO_TEAMS_TEAM_ID,
@@ -221,6 +231,7 @@ export function buildPlayerStats(index: MatchIndex, subject: GUID): VersusPlayer
         avgLoadoutValue: economyRounds === 0 ? 0 : loadoutTotal / economyRounds,
         avgSpend: economyRounds === 0 ? 0 : spendTotal / economyRounds,
         ultimateCasts: player.stats.abilityCasts?.ultimateCasts ?? 0,
+        performance: statsBlock
     };
 }
 

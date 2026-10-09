@@ -56,7 +56,7 @@ export class ValorantGameLoopManager implements IObjectDataManager<
 
     private async onValorantAPIReady(): Promise<void> {
         try {
-            const state = await this.valApi.getGameLoopState();
+            const state = await this.valApi.session.getGameLoopState();
             this.updateValue(state.loopState);
         } catch (err) {
             this.logger.warn('Failed to get game loop state', err);

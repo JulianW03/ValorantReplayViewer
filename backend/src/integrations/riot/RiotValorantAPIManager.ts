@@ -13,10 +13,21 @@ import { SimpleObjectDataManager } from '@/core/data/SimpleObjectDataManager';
 import { EventType } from '@/core/events/EventTypes';
 import { RiotValorantAPIReadyState } from '@/integrations/riot/RiotValorantAPIReadyState';
 import { RegionToDefaultShardMap } from '@/config/ConfigV1.schema';
-import { RiotMatchApiResponseDTO, RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
+import { RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
 import { ProductSessionDTO } from '#/schemas/ProductSession.schema';
-import { z } from 'zod';
 import { type AppConfig, InjectConfig } from '@/config/configLoader';
+import {
+    AccoladeApiSpec,
+    AccoladeInfoFromRiotSchema,
+    ConnectionStateSchema,
+    DeploymentContext,
+    MatchApiSpec,
+    MatchHistoryResponseSchema,
+    ReplayApiSpec,
+    ReplaySummarySchema,
+    SessionApiSpec,
+    ValorantApiSpec,
+} from '@/integrations/riot/ValorantApiSpec';
 
 
 export enum ValorantServiceUrl {
@@ -69,64 +80,9 @@ type RemoteConfig = {
     'Collapsed': Record<RemoteConfigEntry, string>
 }
 
-const ReplaySummarySchema = z.object({
-    GameVersion: z.string().nonempty(),
-    Checksum: z.string().nonempty(),
-});
-
-export type ReplaySummary = z.infer<typeof ReplaySummarySchema>;
-
-export interface MatchHistoryEntry {
-    MatchID: string;
-    GameStartTime: number;
-    QueueID: string;
-}
-
-interface MatchHistoryResponse {
-    Subject: string;
-    BeginIndex: number;
-    EndIndex: number;
-    Total: number;
-    History: MatchHistoryEntry[];
-}
-
-export interface DeploymentContext {
-    version: string;
-    puuid: string;
-}
-
-export interface ConnectionState {
-    subject: string;
-    cxnState: string;
-    cxnCloseReason: string;
-    clientID: string;
-    clientVersion: string;
-    loopState: string;
-    loopStateMetadata: string;
-    version: number;
-    lastHeartbeatTime: string; // ISO timestamp
-    expiredTime: string; // ISO timestamp
-    heartbeatIntervalMillis: number;
-    playtimeNotification: string;
-    playtimeMinutes: number;
-    isRestricted: boolean;
-    userinfoValidTime: string; // ISO timestamp
-    restrictionType: string;
-    clientPlatformInfo: ClientPlatformInfo;
-    connectionTime: string; // ISO timestamp
-    shouldForceInvalidate: boolean;
-}
-
-export interface ClientPlatformInfo {
-    platformType: string;
-    platformOS: string;
-    platformOSVersion: string;
-    platformChipset: string;
-    platformDevice: string;
-}
 
 @Injectable()
-export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy {
+export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy, ValorantApiSpec {
     protected static readonly MAGIC_PLATFORM_STRING =
         'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9';
     protected static readonly KEY_ARES_DEPLOYMENT = '-ares-deployment=';
@@ -191,19 +147,37 @@ export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy {
         if (!deploymentArg)
             throw new Error('Deployment region not found in launch arguments');
 
-        const region = this.config.overrides['valorant-api'].region ?? deploymentArg.split(
-            RiotValorantAPIManager.KEY_ARES_DEPLOYMENT,
-        )[1];
+        const forcedRegion = this.config.overrides['valorant-api'].region;
+        let region: string;
+        if (forcedRegion) {
+            this.logger.debug(`Using configured region ${forcedRegion}`);
+            region = forcedRegion;
+        } else {
+            this.logger.debug(`No region is forced via the config, will try to derive it from deployment ${deploymentArg}`);
+            region = deploymentArg.split(
+                RiotValorantAPIManager.KEY_ARES_DEPLOYMENT,
+            )[1];
+        }
+
         if (!region) throw new Error('Invalid deployment region value');
 
-        const shard = this.config.overrides['valorant-api'].shard ?? RegionToDefaultShardMap[region];
+        const forcedShard = this.config.overrides['valorant-api'].shard;
+        let shard: string;
+        if (forcedShard) {
+            this.logger.debug(`Using configured shard ${forcedShard}`);
+            shard = forcedShard;
+        } else {
+            this.logger.debug(`No shard is forced via the config, will try to derive it from region ${region}`);
+            shard = RegionToDefaultShardMap[region];
+        }
         if (!shard) throw new Error('Unable to determine shard for region ' + region);
 
         const serviceUrl = `https://shared.${shard}.a.pvp.net/v1/config/${region}`;
         fetch(serviceUrl, { headers: authHeaders })
             .then(response => response.json())
             .then(data => {
-                this.logger.log(`Fetched remote config for region ${region}`, data);
+                this.logger.log(`Fetched remote config for region ${region}`);
+                this.logger.debug(data);
                 const raw = data as RemoteConfig;
                 Object.entries(raw.Collapsed).forEach(([key, value]) => {
                     if (key.startsWith(SERVICEURL_PREFIX)) {
@@ -215,8 +189,8 @@ export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy {
                         this.serviceUrls.updateKeyValue(normalizedKey as ValorantServiceUrl, value);
                     }
                 });
-                this.logger.debug('Setting state as ready');
                 this.readyState.updateValue(RiotValorantAPIReadyState.READY);
+                this.logger.log('Riot Valorant API ready');
             })
             .catch(e => this.logger.error(e));
     }
@@ -247,102 +221,127 @@ export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy {
         };
     }
 
-    public async getMatchHistory(
-        startIndex = 0,
-        endIndex = 20,
-    ): Promise<MatchHistoryEntry[]> {
-        const { version, puuid } = this.getDeploymentContext();
-        const url = this.createUrl(ValorantServiceUrl.MATCH_HISTORY, `match-history/v1/history/${puuid}`);
-        url.searchParams.set('startIndex', startIndex.toString());
-        url.searchParams.set('endIndex', endIndex.toString());
+    readonly matches: MatchApiSpec = {
+        getHistory: async (startIndex = 0, endIndex = 20) => {
+            const { version, puuid } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.MATCH_HISTORY, `match-history/v1/history/${puuid}`);
+            url.searchParams.set('startIndex', startIndex.toString());
+            url.searchParams.set('endIndex', endIndex.toString());
 
-        const response = await fetch(url, {
-            headers: this.getAuthHeaders(version),
-        });
-        if (!response.ok) {
-            this.logger.error('Request failed: ', response);
-            throw new Error(
-                `Match history request failed with status ${response.status}`,
-            );
-        }
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                this.logger.error('Request failed: ', response);
+                throw new Error(
+                    `Match history request failed with status ${response.status}`,
+                );
+            }
 
-        const data: MatchHistoryResponse = await response.json();
-        return data.History ?? [];
-    }
+            const data = await MatchHistoryResponseSchema.parseAsync(await response.json());
+            return data.History;
+        },
 
-    async getMatchDetails(matchId: string): Promise<RiotMatchApiResponseDTO> {
-        const { version } = this.getDeploymentContext();
-        const url = this.createUrl(ValorantServiceUrl.MATCH_DETAILS, `match-details/v1/matches/${matchId}`);
+        getDetails: async (matchId) => {
+            const { version } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.MATCH_DETAILS, `match-details/v1/matches/${matchId}`);
 
-        const response = await fetch(url, {
-            headers: this.getAuthHeaders(version),
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Match details request failed with status ${response.status}`,
-            );
-        }
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Match details request failed with status ${response.status}`,
+                );
+            }
 
-        const json = await response.json();
+            const json = await response.json();
 
-        try {
-            return await RiotMatchApiResponseDTOSchema.parseAsync(json);
-        } catch (error) {
-            this.logger.error(json, error);
-            throw new Error('Failed to parse match details', { cause: error });
-        }
-    }
+            try {
+                return await RiotMatchApiResponseDTOSchema.parseAsync(json);
+            } catch (error) {
+                this.logger.error(json, error);
+                throw new Error('Failed to parse match details', { cause: error });
+            }
+        },
+    };
 
-    async getReplaySummary(matchId: string): Promise<ReplaySummary> {
-        const { version } = this.getDeploymentContext();
-        const url = this.createUrl(ValorantServiceUrl.GAME_AGNOSTIC_MATCH_HISTORY, `match-history-query/v3/product/valorant/matchId/${matchId}/infoType/summary`);
+    readonly replays: ReplayApiSpec = {
+        getSummary: async (matchId) => {
+            const { version } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.GAME_AGNOSTIC_MATCH_HISTORY, `match-history-query/v3/product/valorant/matchId/${matchId}/infoType/summary`);
 
-        const response = await fetch(url, {
-            headers: this.getAuthHeaders(version),
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Replay summary request failed with status ${response.status}`,
-            );
-        }
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Replay summary request failed with status ${response.status}`,
+                );
+            }
 
-        const json = await response.json();
-        return await ReplaySummarySchema.parseAsync(json);
-    }
+            return await ReplaySummarySchema.parseAsync(await response.json());
+        },
 
-    async downloadReplayFile(matchId: string): Promise<Buffer> {
-        const { version } = this.getDeploymentContext();
-        const url = this.createUrl(ValorantServiceUrl.GAME_AGNOSTIC_MATCH_HISTORY, `match-history-query/v3/product/valorant/matchId/${matchId}/infoType/replay`);
+        downloadFile: async (matchId) => {
+            const { version } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.GAME_AGNOSTIC_MATCH_HISTORY, `match-history-query/v3/product/valorant/matchId/${matchId}/infoType/replay`);
 
-        const response = await fetch(url, {
-            headers: this.getAuthHeaders(version),
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Replay download failed with status ${response.status}`,
-            );
-        }
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Replay download failed with status ${response.status}`,
+                );
+            }
 
-        return Buffer.from(await response.arrayBuffer());
-    }
+            return Buffer.from(await response.arrayBuffer());
+        },
+    };
 
-    async getGameLoopState(): Promise<ConnectionState> {
-        const { version, puuid } = this.getDeploymentContext();
-        const url = this.createUrl(ValorantServiceUrl.SESSION, `session/v1/sessions/${puuid}`);
+    readonly accolades: AccoladeApiSpec = {
+        getForPlayer: async (puuid) => {
+            const { version } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.GOLDSTAR, `/goldstars/v1/players/${puuid}`);
 
-        const response = await fetch(url, {
-            headers: this.getAuthHeaders(version),
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Game loop state request failed with status ${response.status}`,
-            );
-        }
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Accolade info request failed with status ${response.status}`,
+                );
+            }
 
-        const data = await response.json();
-        this.logger.log(`Game loop state response: ${JSON.stringify(data)}`);
-        return data;
-    }
+            return await AccoladeInfoFromRiotSchema.parseAsync(await response.json());
+        },
+    };
+
+    readonly session: SessionApiSpec = {
+        getGameLoopState: async () => {
+            const { version, puuid } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.SESSION, `session/v1/sessions/${puuid}`);
+
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Game loop state request failed with status ${response.status}`,
+                );
+            }
+
+            const json = await response.json();
+            const parsed = ConnectionStateSchema.safeParse(json);
+            if (!parsed.success) {
+                this.logger.error("Failed to parse schema of Connection state", parsed.error);
+                this.logger.error(json);
+                throw new Error(parsed.error.message);
+            }
+            return parsed.data;
+        },
+    };
 
     public createUrl = (endpoint: ValorantServiceUrl, path: string) => {
         const base = this.serviceUrls.getKeyView(endpoint);
