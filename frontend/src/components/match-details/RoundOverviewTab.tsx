@@ -124,9 +124,9 @@ export function RoundOverviewTab({ data, highlightPlayerUuid, highlightPlayerTea
         return <div>No data</div>
     }
 
+
     return (
         <>
-
             <RoundSelectorStrip
                 chips={buildRoundChips(data.riotMatchMetadata.matchMetadata.roundResults, data.riotMatchMetadata!.matchMetadata!.players, highlightPlayerTeam)}
                 selectedRound={selectedRound}

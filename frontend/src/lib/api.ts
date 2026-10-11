@@ -13,6 +13,7 @@ import type { MinimalVersionInfo } from '#/dto/MinimalVersionInfo.ts';
 import type { StorageStatusDTO } from '#/schemas/StorageStatusDTO.ts';
 import type { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema.ts';
 import type { SocialPresence } from '#/schemas/SocialPresence/SocialPresence.schema.ts';
+import type { UpdateStatus } from '#/schemas/updateCheck/UpdateStatus.schema.ts';
 import type {
     DownloadStatesResponse,
     ReplayListResponse,
@@ -73,6 +74,10 @@ export interface EffectiveConfig {
             'retry-timeout-ms': number;
             regex: string;
         };
+    };
+    version: {
+        config: number;
+        app: string;
     };
 }
 
@@ -258,5 +263,8 @@ export const api = {
     },
     socialPresence: {
         getAll: () => request<Record<string, SocialPresence> | null>('/caching/valorant/multigame-presences'),
+    },
+    updateCheck: {
+        getStatus: () => request<UpdateStatus>('/plugins/update-check/status'),
     },
 } as const;

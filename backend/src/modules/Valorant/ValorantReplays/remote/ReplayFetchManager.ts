@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { ReplaySummary, RiotValorantAPIManager } from '@/integrations/riot/RiotValorantAPIManager';
+import { RiotValorantAPIManager } from '@/integrations/riot/RiotValorantAPIManager';
 import { EntitlementTokenManager } from '@/modules/EntitlementTokenModule/EntitlementTokenManager';
 import { PuuidToPlayerAliasManager } from '@/modules/PuuidToPlayerAliasModule/PuuidToPlayerAliasManager';
 import { RiotMatchApiResponseDTO } from '#/schemas/RiotMatchApiReponseDTO';
@@ -7,6 +7,7 @@ import { GUID } from '#/schemas/GUIDSchema';
 import { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema';
 import { CURRENT_REPLAY_FORMAT_VERSION, ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
 import { createHash } from 'node:crypto';
+import { ReplaySummary } from '@/integrations/riot/ValorantApiSpec';
 
 export interface CombinedReplayData {
     metadata: ReplayMetadataV2;
@@ -30,7 +31,7 @@ export class ReplayFetchManager {
     }
 
     public async fetchCombinedReplayData(matchId: string): Promise<CombinedReplayData> {
-        const summary = await this.apiClient.getMatchDetails(matchId);
+        const summary = await this.apiClient.matches.getDetails(matchId);
         const shouldAttemptReplayDownload = summary.matchInfo.isReplayRecorded;
         let replayData: ReplayData | undefined = undefined;
         if (shouldAttemptReplayDownload) {
@@ -56,8 +57,8 @@ export class ReplayFetchManager {
 
     private async getReplayData(matchId: string): Promise<ReplayData> {
         const [replayBuffer, replaySummary] = await Promise.all([
-            this.apiClient.downloadReplayFile(matchId),
-            this.apiClient.getReplaySummary(matchId),
+            this.apiClient.replays.downloadFile(matchId),
+            this.apiClient.replays.getSummary(matchId),
         ]);
 
         const hash = createHash('sha256')

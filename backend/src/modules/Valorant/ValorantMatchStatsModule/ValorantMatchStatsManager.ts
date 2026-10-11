@@ -63,7 +63,7 @@ export class ValorantMatchStatsManager
     }
 
     private async fetchMatchData(matchId: GUID): Promise<RiotMatchMetadata> {
-        const result = await this.valorantApi.getMatchDetails(matchId);
+        const result = await this.valorantApi.matches.getDetails(matchId);
         const puuids = result.players.map(p => p.subject).filter((p) => p !== undefined);
         this.playerAliasManager.requestBatchFetch(puuids);
         this.logger.debug(

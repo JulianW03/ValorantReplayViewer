@@ -5,6 +5,7 @@ import { RecentMatchesPage } from '@/pages/RecentMatchesPage';
 import { SavedReplaysPage } from '@/pages/SavedReplaysPage';
 import { InjectorPage } from '@/pages/InjectorPage';
 import { ConfigPage } from '@/pages/ConfigPage';
+import { UpdateCheckPage } from '@/pages/UpdateCheckPage';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAgentRegistry, useMapRegistry } from '@/lib/queries';
 import { RequireSessionGuard } from '@/components/RequireSessionGuard.tsx';
@@ -63,6 +64,13 @@ const router = createHashRouter([
                 element: <ConfigPage />,
                 handle: {
                     title: "Configuration",
+                },
+            },
+            {
+                path: "update-check",
+                element: <UpdateCheckPage />,
+                handle: {
+                    title: "Update Check",
                 },
             },
             {

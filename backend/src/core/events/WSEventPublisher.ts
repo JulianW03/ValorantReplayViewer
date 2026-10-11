@@ -16,6 +16,7 @@ import { ProductSessionManager } from '@/modules/ProductSessionModule/ProductSes
 import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/ReplayManager';
 import { ReplayInjectManagerV2 } from '@/modules/Valorant/ValorantReplays/injector/ReplayInjectManagerV2';
 import { SocialPresenceManager } from '@/modules/SocialPresence/SocialPresenceManager';
+import { UpdateCheckerManager } from '@/modules/UpdateChecker/UpdateCheckerManager';
 
 @WebSocketGateway({})
 @Injectable()
@@ -42,6 +43,7 @@ export class WSEventPublisher
         ValorantVersionInfoManager.name,
         ProductSessionManager.name,
         ReplayManager.name,
+        UpdateCheckerManager.name,
     ]);
 
     private unsubscribeAll: (() => void) | null = null;
