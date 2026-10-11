@@ -91,9 +91,17 @@ export const AppConfigurationConfig = z.object({
 });
 export type AppConfigurationConfig = z.infer<typeof AppConfigurationConfig>;
 
+export const UpdateCheckOverridesSchema = z.object({
+    'check-interval-seconds': z.number().int().positive(),
+    'github-user': z.string().regex(/^[A-Za-z0-9-]+$/),
+    'github-repo': z.string().regex(/^[A-Za-z0-9._-]+$/),
+});
+export type UpdateCheckerOverrides = z.infer<typeof UpdateCheckOverridesSchema>;
+
 export const Configurations = z.object({
     app: AppConfigurationConfig,
     'valorant-version-read': VersionReadConfiguration,
+    'update-check': UpdateCheckOverridesSchema,
 });
 export type Configurations = z.infer<typeof Configurations>;
 
@@ -114,7 +122,7 @@ export type ValorantApiOverrides = z.infer<typeof ValorantApiOverrides>;
 
 export const OverrideConfig = z.object({
     'valorant-api': ValorantApiOverrides,
-    'valorant-version-read': ValorantVersionReadOverrides,
+    'valorant-version-read': ValorantVersionReadOverrides
 });
 export type OverrideConfig = z.infer<typeof OverrideConfig>;
 
@@ -138,13 +146,14 @@ export const OverridableConfigV1Schema = z
             .object({
                 app: AppConfigurationConfig.partial().strict().optional(),
                 'valorant-version-read': VersionReadConfiguration.partial().strict().optional(),
+                'update-check': UpdateCheckOverridesSchema.strict().optional(),
             })
             .strict()
             .optional(),
         overrides: z
             .object({
                 'valorant-api': ValorantApiOverrides.strict().optional(),
-                'valorant-version-read': ValorantVersionReadOverrides.strict().optional(),
+                'valorant-version-read': ValorantVersionReadOverrides.strict().optional()
             })
             .strict()
             .optional(),

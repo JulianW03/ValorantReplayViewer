@@ -6,7 +6,6 @@ import { AccountNameAndTagLineModule } from '@/modules/Account/AccountNameAndTag
 import { EntitlementTokenModule } from '@/modules/EntitlementTokenModule/EntitlementTokenModule';
 import { ValorantMatchStatsModule } from '@/modules/Valorant/ValorantMatchStatsModule/ValorantMatchStatsModule';
 import { EventBusModule } from '@/core/events/EventBusModule';
-import { ConfigModule } from '@nestjs/config';
 import { ReplayModule } from '@/modules/Valorant/ValorantReplays/ReplayModule';
 import { ValorantGameLoopModule } from '@/modules/Valorant/ValorantGameLoopModule/ValorantGameLoopModule';
 import { RiotValorantAPIModule } from '@/integrations/riot/RiotValorantAPIModule';
@@ -27,6 +26,7 @@ import { ValorantMatchHistoryModule } from '@/modules/Valorant/MatchHistory/Matc
 import { SocialPresenceModule } from '@/modules/SocialPresence/SocialPresenceModule';
 import { PathProviderModule } from '@/modules/PathProvider/PathProviderModule';
 import { LoggingModule } from '@/core/logging/LoggingModule';
+import { UpdateCheckerModule } from '@/modules/UpdateChecker/UpdateCheckerModule';
 
 export const APP = Symbol('APP');
 
@@ -56,6 +56,7 @@ export const APP = Symbol('APP');
         GearAssetResolverModule,
         StaticAssetProxyModule,
         ValorantVersionInfoModule,
+        UpdateCheckerModule,
         ShutdownModule,
         EventBusModule,
         ReplayModule,

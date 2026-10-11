@@ -11,6 +11,7 @@ import type { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema.ts';
 import type { PlayerUuidDTO } from '#/schemas/PlayerUuid.schema.ts';
 import type { MinimalVersionInfo } from '#/dto/MinimalVersionInfo.ts';
 import type { SocialPresence } from '#/schemas/SocialPresence/SocialPresence.schema.ts';
+import type { UpdateStatus } from '#/schemas/updateCheck/UpdateStatus.schema.ts';
 
 export type EventType =
     | 'StateUpdated'
@@ -68,6 +69,7 @@ interface AppState {
 
     currentGameLoopState: string | null;
     socialPresenceRegistry: Record<string, SocialPresence> | null;
+    updateStatus: UpdateStatus | null;
 
     setWsConnected: (connected: boolean) => void;
     setPlayerAlias: (alias: PlayerAliasDTO) => void;
@@ -92,6 +94,7 @@ interface AppState {
 
     setCurrentGameLoopState: (state: string | null) => void;
     setSocialPresenceRegistry: (registry: Record<string, SocialPresence> | null) => void;
+    setUpdateStatus: (status: UpdateStatus | null) => void;
 
     /**
      * Routes incoming WebSocket events to per-source handlers.
@@ -176,6 +179,9 @@ export const useAppStore = create<AppState>((set) => {
 
     const setSocialPresenceRegistry = (registry: Record<string, SocialPresence> | null) =>
         set({ socialPresenceRegistry: registry });
+
+    const setUpdateStatus = (status: UpdateStatus | null) =>
+        set({ updateStatus: status });
 
     /**
      * Upserts or removes a single product's presence entry.
@@ -266,6 +272,11 @@ export const useAppStore = create<AppState>((set) => {
                 }
             },
 
+            UpdateCheckerManager: (event) => {
+                if (event.type !== 'StateUpdated') return;
+                setUpdateStatus(event.payload.value as UpdateStatus | null);
+            },
+
             ProductSessionManager: (event) => {
                 switch (event.type) {
                     case 'StateUpdated': {
@@ -317,6 +328,7 @@ export const useAppStore = create<AppState>((set) => {
         sessionRegistry: null,
         currentGameLoopState: null,
         socialPresenceRegistry: null,
+        updateStatus: null,
         currentInjectState: {
             state: InjectStates.IDLE,
             targetMatchId: null,
@@ -339,6 +351,7 @@ export const useAppStore = create<AppState>((set) => {
         setCurrentShippingVersion,
         setCurrentGameLoopState,
         setSocialPresenceRegistry,
+        setUpdateStatus,
         handleWSEvent,
     };
 });

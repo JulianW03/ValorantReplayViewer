@@ -30,6 +30,11 @@
     "valorant-version-read": {
       "regex": "CI server version: (\\S*)",
       "retry-timeout-ms": 5000
+    },
+    "update-check": {
+      "check-interval-seconds": 1800,
+      "github-user": "JulianW03",
+      "github-repo": "ValorantReplayViewer"
     }
   },
   "overrides": {

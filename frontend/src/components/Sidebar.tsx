@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BugPlay, ChevronDown, Clock, HardDrive, Settings } from 'lucide-react';
+import { BugPlay, ChevronDown, Clock, HardDrive, RefreshCw, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Sidebar,
@@ -21,6 +21,11 @@ import { cn } from '@/lib/utils';
 import { ShutdownButton } from '@/components/ShutdownButton';
 import { Separator } from '@/components/ui/separator.tsx';
 import { SimpleLogo } from '@/components/icons/SimpleLogo';
+import { useUpdateStatus } from '@/lib/queries';
+
+function UpdateDot() {
+    return <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Update available" />;
+}
 
 const replayNavItems = [
     { title: 'Saved Matches', path: '/saved', icon: HardDrive },
@@ -33,6 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const [toolsOpen, setToolsOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const updateAvailable = useUpdateStatus()?.status === 'UPDATE_AVAILABLE';
 
     return (
         <Sidebar variant="inset" {...props}>
@@ -84,7 +90,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger className="flex w-full items-center justify-between">
-                                Settings
+                                <span className="flex items-center gap-2">
+                                    Settings
+                                    {updateAvailable && !toolsOpen && <UpdateDot />}
+                                </span>
                                 <ChevronDown
                                     className={cn(
                                         'size-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
@@ -104,6 +113,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                         >
                                             <Settings />
                                             <span>Configuration</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            isActive={location.pathname === '/update-check'}
+                                            onClick={() => navigate('/update-check')}
+                                            tooltip="Update Check"
+                                        >
+                                            <RefreshCw />
+                                            <span className="flex-1">Update Check</span>
+                                            {updateAvailable && <UpdateDot />}
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 </SidebarMenu>

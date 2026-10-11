@@ -37,6 +37,7 @@ export const queryKeys = {
     configOverrides: ['configOverrides'] as const,
     gameLoopState: ['gameLoopState'] as const,
     socialPresenceRegistry: ['socialPresenceRegistry'] as const,
+    updateStatus: ['updateStatus'] as const,
 } as const;
 
 // ---- Riot Client ----
@@ -652,4 +653,25 @@ export function useSocialPresenceRegistry() {
     });
 
     return registry;
+}
+
+// ---- Update check ----
+
+export function useUpdateStatus() {
+    const existing = useAppStore((s) => s.updateStatus);
+    const setUpdateStatus = useAppStore((s) => s.setUpdateStatus);
+
+    useQuery({
+        queryKey: queryKeys.updateStatus,
+        queryFn: async () => {
+            const status = await api.updateCheck.getStatus();
+            setUpdateStatus(status);
+            return status;
+        },
+        enabled: existing === null,
+        staleTime: Infinity,
+        retry: false,
+    });
+
+    return existing;
 }
