@@ -87,6 +87,7 @@ jobs:
           if-no-files-found: error
           path: |
             backend/dist
+            backend/scripts
             backend/package.json
             backend/pnpm-workspace.yaml
             backend/pnpm-lock.yaml
