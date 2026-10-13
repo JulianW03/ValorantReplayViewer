@@ -64,8 +64,7 @@ export const APP = Symbol('APP');
         EventBusModule,
         ReplayModule,
         PathProviderModule,
-        LoggingModule,
-        ExternalModule,
+        LoggingModule
     ],
 })
 export class AppModule {
