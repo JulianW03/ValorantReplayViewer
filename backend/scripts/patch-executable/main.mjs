@@ -39,5 +39,5 @@ const oldSubsystem = exe.newHeader.optionalHeader.subsystem;
 /**
  * @see https://learn.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.vcprojectengine.subsystemoption
  * */
-exe.newHeader.optionalHeader.subsystem = 3;
+exe.newHeader.optionalHeader.subsystem = 2;
 fs.writeFileSync(targetExecutable, Buffer.from(exe.generate()));
