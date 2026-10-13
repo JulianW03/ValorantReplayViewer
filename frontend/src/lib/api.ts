@@ -92,10 +92,6 @@ export interface EffectiveConfig {
         config: number;
         app: string;
     };
-    version: {
-        config: number;
-        app: string;
-    };
 }
 
 // ---- HTTP client ----
