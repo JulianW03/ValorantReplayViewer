@@ -11,6 +11,7 @@ import { WinstonNestLogger } from '@/core/logging/WinstonNestLogger';
 import { OriginCheckedWsAdapter } from '@/OriginCheckedWsAdapter';
 import { OriginPolicy } from '@/core/origin/OriginPolicy';
 import { isExternalRoute } from '@/core/origin/OriginGuard';
+import { listenOnLoopback } from '@/core/http/listenOnLoopback';
 
 async function bootstrap() {
     const isDev = process.env.NODE_ENV === 'development';
@@ -58,7 +59,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
 
-    await app.listen(configuredPort, '127.0.0.1');
+    await listenOnLoopback(app, configuredPort);
 }
 
 bootstrap();
