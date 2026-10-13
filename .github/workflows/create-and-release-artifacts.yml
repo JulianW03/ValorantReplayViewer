@@ -7,13 +7,31 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] \
+            || { echo "::error::Invalid version '$VERSION'"; exit 1; }
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag $VERSION already exists"; exit 1
+          fi
+
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v6
         with:
@@ -32,65 +50,61 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Prepare frontend
-        run: |
-          cd frontend
-          pnpm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
 
-      - name: Test frontend
-        run: |
-          cd frontend
-          pnpm run typescript-check
+      - name: Type-check frontend
+        working-directory: frontend
+        run: pnpm run typescript-check
 
       - name: Build frontend
-        run: |
-          cd frontend
-          pnpm run build 
+        working-directory: frontend
+        run: pnpm run build
 
-      - name: Setup backend
+      - name: Install backend deps
+        working-directory: backend
         run: |
-          cd backend
           mkdir -p public
-          cp -r ../frontend/dist/* public/
-          pnpm ci
+          cp -r ../frontend/dist/. public/
+          pnpm install --frozen-lockfile
 
       - name: Generate Riot API types
-        run: |
-          cd backend
-          pnpm run generate
+        working-directory: backend
+        run: pnpm run generate
 
       - name: Run backend tests
-        run: |
-          cd backend
-          pnpm run test
+        working-directory: backend
+        run: pnpm run test
 
-      - name: Build  backend
-        run: |
-          cd backend
-          pnpm run build
+      - name: Build backend
+        working-directory: backend
+        run: pnpm run build
 
-      - name: Upload backend bundle
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
           name: backend-bundle
+          if-no-files-found: error
           path: |
             backend/dist
             backend/package.json
             backend/pnpm-workspace.yaml
             backend/pnpm-lock.yaml
 
-      - name: Upload Changelog
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
           name: changelog
-          path: |
-            CHANGELOG.md
-  
+          if-no-files-found: error
+          path: CHANGELOG.md
 
   package-windows:
-    runs-on: windows-latest
     needs: build
-
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -105,23 +119,22 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: |
-            backend/pnpm-lock.yaml
+          cache-dependency-path: backend/pnpm-lock.yaml
 
-      - run: |
-          cd backend
-          pnpm ci
-          pnpm run package
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run package
 
       - uses: actions/upload-artifact@v7
         with:
           name: windows-binary
+          if-no-files-found: error
           path: backend/binaries
 
   release:
+    needs: [build, package-windows]
     runs-on: ubuntu-latest
-    needs: [ package-windows, build ]
-
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -135,15 +148,15 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          mkdir release
-          cp windows/*.exe release/
+            mkdir release
+            cp windows/*.exe release/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: ${{ github.event.inputs.version }}
-          body_path: ${{ github.workspace }}/changelog/CHANGELOG.md
-          files: release/**
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          target_commitish: ${{ github.sha }}
+          body_path: changelog/CHANGELOG.md
+          files: release/*
+          fail_on_unmatched_files: true
