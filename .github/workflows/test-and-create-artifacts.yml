@@ -1,15 +1,25 @@
 name: test-and-create-artifacts
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test-artifacts:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v6
         with:
@@ -28,48 +38,46 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Prepare frontend
-        run: |
-          cd frontend
-          pnpm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
 
-      - name: Test frontend
-        run: |
-          cd frontend
-          pnpm run typescript-check
+      - name: Type-check frontend
+        working-directory: frontend
+        run: pnpm run typescript-check
 
-      - name:  Build frontend
-        run: |
-          cd frontend
-          pnpm run build 
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
 
-      - name: Setup backend
+      - name: Install backend deps
+        working-directory: backend
         run: |
-            cd backend
-            mkdir -p public
-            cp -r ../frontend/dist/* public/
-            pnpm ci
+          mkdir -p public
+          cp -r ../frontend/dist/. public/
+          pnpm install --frozen-lockfile
 
       - name: Generate Riot API types
-        run: |
-            cd backend
-            pnpm run generate
+        working-directory: backend
+        run: pnpm run generate
 
       - name: Run backend tests
-        run: |
-          cd backend
-          pnpm run test
+        working-directory: backend
+        run: pnpm run test
 
-      - name: Build  backend
-        run: |
-          cd backend
-          pnpm run build
+      - name: Build backend
+        working-directory: backend
+        run: pnpm run build
 
       - name: Upload backend bundle
         uses: actions/upload-artifact@v7
         with:
           name: backend-bundle
+          if-no-files-found: error
+          retention-days: 14
           path: |
             backend/dist
+            backend/scripts
             backend/package.json
-            backend/package-lock.json
+            backend/pnpm-lock.yaml
+            backend/pnpm-workspace.yaml

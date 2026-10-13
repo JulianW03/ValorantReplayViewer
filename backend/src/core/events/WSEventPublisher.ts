@@ -17,6 +17,9 @@ import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/Replay
 import { ReplayInjectManagerV2 } from '@/modules/Valorant/ValorantReplays/injector/ReplayInjectManagerV2';
 import { SocialPresenceManager } from '@/modules/SocialPresence/SocialPresenceManager';
 import { UpdateCheckerManager } from '@/modules/UpdateChecker/UpdateCheckerManager';
+import { IncomingMessage } from 'node:http';
+import { InjectConfig } from '@/config/configLoader';
+import type { EnvConfigV1DTO } from '@/config/ConfigV1.schema';
 
 @WebSocketGateway({})
 @Injectable()
@@ -30,9 +33,10 @@ export class WSEventPublisher
     @WebSocketServer()
     server!: Server;
 
-    constructor(private readonly bus: SimpleEventBus) {}
+    constructor(
+        private readonly bus: SimpleEventBus
+    ) {}
 
-    //TODO: Make this dynamic
     private static readonly ALLOWED_SOURCES = new Set([
         AccountNameAndTagLineManager.name,
         ValorantGameLoopManager.name,
@@ -48,7 +52,7 @@ export class WSEventPublisher
 
     private unsubscribeAll: (() => void) | null = null;
 
-    handleConnection(client: any, ...args: any[]): any {}
+    handleConnection(client: WebSocket, request: IncomingMessage) {}
 
     handleDisconnect(client: any): any {}
 
@@ -57,6 +61,7 @@ export class WSEventPublisher
     }
 
     onModuleInit(): any {
+
         this.unsubscribeAll = this.bus.subscribeOnAll((event) => {
             if (
                 !event.source ||

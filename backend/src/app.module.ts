@@ -27,6 +27,8 @@ import { SocialPresenceModule } from '@/modules/SocialPresence/SocialPresenceMod
 import { PathProviderModule } from '@/modules/PathProvider/PathProviderModule';
 import { LoggingModule } from '@/core/logging/LoggingModule';
 import { UpdateCheckerModule } from '@/modules/UpdateChecker/UpdateCheckerModule';
+import { OriginModule } from '@/core/origin/OriginModule';
+import { ExternalModule } from '@/modules/External/ExternalModule';
 
 export const APP = Symbol('APP');
 
@@ -37,6 +39,7 @@ export const APP = Symbol('APP');
             serveRoot: '/',
         }),
         ConfigurationModule,
+        OriginModule,
         RiotClientModule,
         ProductSessionModule,
         AccountNameAndTagLineModule,
@@ -61,7 +64,7 @@ export const APP = Symbol('APP');
         EventBusModule,
         ReplayModule,
         PathProviderModule,
-        LoggingModule,
+        LoggingModule
     ],
 })
 export class AppModule {
