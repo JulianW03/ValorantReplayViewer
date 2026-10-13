@@ -132,7 +132,12 @@ export class UpdateCheckerManager implements OnModuleInit, OnModuleDestroy {
 
         const optAsset = validated.assets.find((asset) => asset.name?.startsWith('ValorantReplayViewer'));
         if (!optAsset) {
-            //TODO: Fix
+            this.manager.updateValue({
+                status: UpdateStatusIndicator.enum.UNKNOWN,
+                last_check_timestamp: last_check_timestamp,
+                repo_url: this.repoUrl,
+                reason: UnknownStatusReason.enum.REMOTE_SCHEMA_INVALID
+            });
             return;
         }
 

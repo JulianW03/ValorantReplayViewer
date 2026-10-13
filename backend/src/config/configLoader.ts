@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import merge from 'lodash.merge';
+import mergeWith from 'lodash/mergeWith';
 import path from 'path';
 import os from 'node:os';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -20,6 +20,9 @@ export const SYMBOL_CONFIG = Symbol('CONFIG');
 export type AppConfig = EnvConfigV1DTO;
 
 export const InjectConfig = () => Inject(SYMBOL_CONFIG);
+
+// lodash merges arrays index by index, so overriding ['log', 'error', 'warn'] with ['error'] would yield ['error', 'error', 'warn'].
+const replaceArrays = (_base: unknown, override: unknown) => (Array.isArray(override) ? override : undefined);
 
 const isNotFound = (e: unknown): boolean =>
     (e as NodeJS.ErrnoException)?.code === 'ENOENT';
@@ -80,7 +83,7 @@ export class ConfigLoader {
 
         try {
             const overrides = await this.getConfigOverrides();
-            return await EnvConfigV1DTOSchema.parseAsync(merge({}, base, overrides));
+            return await EnvConfigV1DTOSchema.parseAsync(mergeWith({}, base, overrides, replaceArrays));
         } catch (e) {
             this.logger.warn('Failed to load config overrides, using default config.', e);
             return base;

@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@/app.module';
-import { WsAdapter } from '@nestjs/platform-ws';
 import { ConsoleLogger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as process from 'node:process';
@@ -9,6 +8,9 @@ import { ShutdownManager } from '@/modules/ShutdownModule/ShutdownManager';
 import { SYMBOL_CONFIG } from '@/config/configLoader';
 import { EnvConfigV1DTO, LogLevelSchema } from '@/config/ConfigV1.schema';
 import { WinstonNestLogger } from '@/core/logging/WinstonNestLogger';
+import { OriginCheckedWsAdapter } from '@/OriginCheckedWsAdapter';
+import { OriginPolicy } from '@/core/origin/OriginPolicy';
+import { isExternalRoute } from '@/core/origin/OriginGuard';
 
 async function bootstrap() {
     const isDev = process.env.NODE_ENV === 'development';
@@ -24,15 +26,11 @@ async function bootstrap() {
         logger: setupLogger,
     });
     const configuration = app.get<EnvConfigV1DTO>(SYMBOL_CONFIG);
-    setupLogger.log("Done with Nest Setup, Switching to configured logging mechanism now.")
+    setupLogger.log('Done with Nest Setup, Switching to configured logging mechanism now.');
     app.useLogger(app.get(WinstonNestLogger));
 
     const configuredPort = configuration.configurations.app.port;
-    const corsOrigin = [`http://127.0.0.1:${configuredPort}`, `http://localhost:${configuredPort}`, ...configuration.configurations.app['additional-cors-origins']];
-    if (isDev) {
-        corsOrigin.push('http://localhost:5173');
-        corsOrigin.push('http://127.0.0.1:5173');
-    }
+    const originPolicy = app.get(OriginPolicy);
 
     app.enableVersioning({
         type: VersioningType.URI,
@@ -40,8 +38,13 @@ async function bootstrap() {
         prefix: 'api/v',
     });
     app.enableShutdownHooks();
-    app.useWebSocketAdapter(new WsAdapter(app));
-    app.enableCors({ origin: corsOrigin, credentials: false, exposedHeaders: ['ETag'] });
+    app.useWebSocketAdapter(new OriginCheckedWsAdapter(app, [...originPolicy.appOrigins]));
+    app.enableCors((req, callback) => {
+        callback(null, isExternalRoute(req.url)
+            ? { origin: originPolicy.isExternalOrigin(req.headers.origin), methods: ['GET', 'POST'],
+                allowedHeaders: ['Content-Type', 'Authorization'], credentials: false, maxAge: 600 }
+            : { origin: originPolicy.isAppOrigin(req.headers.origin), credentials: false, exposedHeaders: ['ETag'] });
+    });
 
     const shutdownService = app.get(ShutdownManager);
     shutdownService.setApp(app);
@@ -55,7 +58,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
 
-    await app.listen(configuredPort);
+    await app.listen(configuredPort, '127.0.0.1');
 }
 
 bootstrap();

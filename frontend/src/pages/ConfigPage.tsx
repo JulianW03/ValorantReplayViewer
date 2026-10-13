@@ -10,9 +10,10 @@ import {
     useEffectiveConfig,
     useSaveConfigOverrides,
 } from '@/lib/queries'
-import type { ConfigOverrides, SupportedRegion, SupportedShard } from '@/lib/api'
-import { SUPPORTED_REGIONS, SUPPORTED_SHARDS } from '@/lib/api'
+import type { ConfigOverrides, EffectiveConfig, LogLevel, SupportedRegion, SupportedShard } from '@/lib/api'
+import { LOG_LEVELS, SUPPORTED_REGIONS, SUPPORTED_SHARDS } from '@/lib/api'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 
 // ── types ──────────────────────────────────────────────────────────────────
 
@@ -25,9 +26,17 @@ interface FormState {
     // configurations.app
     port: string
     corsOrigins: string[]
+    // configurations.app.logging
+    logLevels: LogLevel[]
+    fileLogLevels: LogLevel[]
+    maxLogFiles: string
     // configurations.valorant-version-read
     retryTimeoutMs: string
     regex: string
+    // configurations.update-check
+    updateCheckIntervalSeconds: string
+    githubUser: string
+    githubRepo: string
     // filepaths
     riotGamesFolderEnvVar: string
     riotGamesFolderPath: string               // newline-delimited segments
@@ -41,8 +50,14 @@ const EMPTY_FORM: FormState = {
     version: '',
     port: '',
     corsOrigins: [],
+    logLevels: [],
+    fileLogLevels: [],
+    maxLogFiles: '',
     retryTimeoutMs: '',
     regex: '',
+    updateCheckIntervalSeconds: '',
+    githubUser: '',
+    githubRepo: '',
     riotGamesFolderEnvVar: '',
     riotGamesFolderPath: '',
     valorantSavedEnvVar: '',
@@ -62,10 +77,18 @@ function overridesToForm(overrides: ConfigOverrides | null): FormState {
         version: o?.['valorant-version-read']?.version ?? '',
         port: cfg?.app?.port != null ? String(cfg.app.port) : '',
         corsOrigins: cfg?.app?.['additional-cors-origins'] ?? [],
+        logLevels: cfg?.app?.logging?.levels ?? [],
+        fileLogLevels: cfg?.app?.logging?.['file-levels'] ?? [],
+        maxLogFiles: cfg?.app?.logging?.['max-log-files'] != null ? String(cfg.app.logging['max-log-files']) : '',
         retryTimeoutMs: cfg?.['valorant-version-read']?.['retry-timeout-ms'] != null
             ? String(cfg['valorant-version-read']['retry-timeout-ms'])
             : '',
         regex: cfg?.['valorant-version-read']?.regex ?? '',
+        updateCheckIntervalSeconds: cfg?.['update-check']?.['check-interval-seconds'] != null
+            ? String(cfg['update-check']['check-interval-seconds'])
+            : '',
+        githubUser: cfg?.['update-check']?.['github-user'] ?? '',
+        githubRepo: cfg?.['update-check']?.['github-repo'] ?? '',
         riotGamesFolderEnvVar: fp?.['riot-games-folder']?.relativeToEnvVar ?? '',
         riotGamesFolderPath: (fp?.['riot-games-folder']?.path ?? []).join('\n'),
         valorantSavedEnvVar: fp?.['valorant-saved']?.relativeToEnvVar ?? '',
@@ -79,9 +102,13 @@ function omitUndefined<T extends object>(obj: T): Partial<T> {
     ) as Partial<T>
 }
 
-function formToOverrides(form: FormState): ConfigOverrides {
+// The backend validates `logging` and `update-check` as whole objects, so a partial override
+// is completed with the currently effective values.
+function formToOverrides(form: FormState, effective: EffectiveConfig | undefined): ConfigOverrides {
     const rgPath = form.riotGamesFolderPath.split('\n').map(s => s.trim()).filter(Boolean)
     const vsPath = form.valorantSavedPath.split('\n').map(s => s.trim()).filter(Boolean)
+    const effApp = effective?.configurations.app
+    const effUpdateCheck = effective?.configurations['update-check']
 
     const valorantApi = omitUndefined({
         region: form.region || undefined,
@@ -91,14 +118,31 @@ function formToOverrides(form: FormState): ConfigOverrides {
         version: form.version || undefined,
     })
 
+    const logging = (form.logLevels.length || form.fileLogLevels.length || form.maxLogFiles)
+        ? omitUndefined({
+            levels: form.logLevels.length ? form.logLevels : effApp?.logging.levels,
+            'file-levels': form.fileLogLevels.length ? form.fileLogLevels : undefined,
+            'max-log-files': form.maxLogFiles ? Number(form.maxLogFiles) : effApp?.logging['max-log-files'],
+        })
+        : undefined
     const appConfig = omitUndefined({
         port: form.port ? Number(form.port) : undefined,
+        logging,
         'additional-cors-origins': form.corsOrigins.length ? form.corsOrigins : undefined,
     })
     const valorantVersionReadConfig = omitUndefined({
         'retry-timeout-ms': form.retryTimeoutMs ? Number(form.retryTimeoutMs) : undefined,
         regex: form.regex || undefined,
     })
+    const updateCheck = (form.updateCheckIntervalSeconds || form.githubUser || form.githubRepo)
+        ? {
+            'check-interval-seconds': form.updateCheckIntervalSeconds
+                ? Number(form.updateCheckIntervalSeconds)
+                : effUpdateCheck?.['check-interval-seconds'],
+            'github-user': form.githubUser || effUpdateCheck?.['github-user'],
+            'github-repo': form.githubRepo || effUpdateCheck?.['github-repo'],
+        }
+        : undefined
 
     const riotGamesFolder = (form.riotGamesFolderEnvVar || rgPath.length)
         ? omitUndefined({
@@ -120,6 +164,7 @@ function formToOverrides(form: FormState): ConfigOverrides {
     const configurations = omitUndefined({
         app: Object.keys(appConfig).length ? appConfig : undefined,
         'valorant-version-read': Object.keys(valorantVersionReadConfig).length ? valorantVersionReadConfig : undefined,
+        'update-check': updateCheck,
     })
     const filepaths = omitUndefined({
         'riot-games-folder': riotGamesFolder,
@@ -235,6 +280,31 @@ function TagInput({ value, onChange, placeholder, disabled }: {
     )
 }
 
+function LogLevelPicker({ value, onChange, disabled }: {
+    value: LogLevel[]
+    onChange: (v: LogLevel[]) => void
+    disabled?: boolean
+}) {
+    function toggle(level: LogLevel, checked: boolean) {
+        onChange(checked ? LOG_LEVELS.filter(l => l === level || value.includes(l)) : value.filter(l => l !== level))
+    }
+
+    return (
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {LOG_LEVELS.map(level => (
+                <label key={level} className="flex items-center gap-1.5 text-sm font-mono">
+                    <Checkbox
+                        checked={value.includes(level)}
+                        onCheckedChange={checked => toggle(level, checked === true)}
+                        disabled={disabled}
+                    />
+                    {level}
+                </label>
+            ))}
+        </div>
+    )
+}
+
 // ── page ───────────────────────────────────────────────────────────────────
 
 export function ConfigPage() {
@@ -259,7 +329,7 @@ export function ConfigPage() {
     }
 
     function handleSave() {
-        saveOverrides(formToOverrides(form), { onSuccess: () => setIsDirty(false) })
+        saveOverrides(formToOverrides(form, effectiveConfig), { onSuccess: () => setIsDirty(false) })
     }
 
     function handleReset() {
@@ -278,6 +348,8 @@ export function ConfigPage() {
     const effPort = eff?.configurations?.app?.port
     const effRetry = eff?.configurations?.['valorant-version-read']?.['retry-timeout-ms']
     const effRegex = eff?.configurations?.['valorant-version-read']?.regex
+    const effLogging = effectiveConfig?.configurations?.app?.logging
+    const effUpdateCheck = effectiveConfig?.configurations?.['update-check']
     const cfgVersion = eff?.version?.config
     const appVersion = eff?.version?.app
 
@@ -362,6 +434,30 @@ export function ConfigPage() {
                         </FieldRow>
                     </div>
 
+                    {/* Logging */}
+                    <div className="rounded-lg border border-border bg-card px-5 py-2">
+                        <p className="py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Logging</p>
+                        <FieldRow label="Console log levels" description="Levels written to the console. None selected keeps the default."
+                                  effective={effLogging ? effLogging.levels.join(', ') : null}>
+                            <LogLevelPicker value={form.logLevels} onChange={v => update('logLevels', v)} disabled={isBusy} />
+                        </FieldRow>
+                        <FieldRow label="File log levels" description="Levels written to the log file. None selected uses the console log levels."
+                                  effective={effLogging ? (effLogging['file-levels'] ?? effLogging.levels).join(', ') : null}>
+                            <LogLevelPicker value={form.fileLogLevels} onChange={v => update('fileLogLevels', v)} disabled={isBusy} />
+                        </FieldRow>
+                        <FieldRow label="Max log files" description="Number of log files kept before the oldest is deleted."
+                                  effective={effLogging ? String(effLogging['max-log-files']) : null}>
+                            <Input
+                                type="number" min={1} step={1}
+                                value={form.maxLogFiles}
+                                onChange={e => update('maxLogFiles', e.target.value)}
+                                placeholder="Default: 10"
+                                className="font-mono"
+                                disabled={isBusy}
+                            />
+                        </FieldRow>
+                    </div>
+
                     {/* Valorant API */}
                     <div className="rounded-lg border border-border bg-card px-5 py-2">
                         <p className="py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Valorant API</p>
@@ -394,6 +490,33 @@ export function ConfigPage() {
                         <FieldRow label="Version regex" description="Regex pattern used to parse the version string from the client." effective={effRegex ?? null}>
                             <Input value={form.regex} onChange={e => update('regex', e.target.value)}
                                    placeholder={effectiveConfig?.configurations?.['valorant-version-read']?.regex} className="font-mono text-xs" disabled={isBusy} />
+                        </FieldRow>
+                    </div>
+
+                    {/* Update check */}
+                    <div className="rounded-lg border border-border bg-card px-5 py-2">
+                        <p className="py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Update check</p>
+                        <FieldRow label="Check interval (s)" description="Seconds between checks for a new release."
+                                  effective={effUpdateCheck ? String(effUpdateCheck['check-interval-seconds']) : null}>
+                            <Input
+                                type="number" min={1} step={60}
+                                value={form.updateCheckIntervalSeconds}
+                                onChange={e => update('updateCheckIntervalSeconds', e.target.value)}
+                                placeholder="Default: 1800"
+                                className="font-mono"
+                                disabled={isBusy}
+                            />
+                        </FieldRow>
+                        <FieldRow label="GitHub repository"
+                                  description="Repository whose releases are offered as updates. Only change this to a repository you trust, the update notification links to its downloads."
+                                  effective={effUpdateCheck ? `${effUpdateCheck['github-user']}/${effUpdateCheck['github-repo']}` : null}>
+                            <div className="flex w-full items-center gap-2">
+                                <Input value={form.githubUser} onChange={e => update('githubUser', e.target.value)}
+                                       placeholder="User" className="font-mono" disabled={isBusy} />
+                                <span className="text-muted-foreground">/</span>
+                                <Input value={form.githubRepo} onChange={e => update('githubRepo', e.target.value)}
+                                       placeholder="Repository" className="font-mono" disabled={isBusy} />
+                            </div>
                         </FieldRow>
                     </div>
 

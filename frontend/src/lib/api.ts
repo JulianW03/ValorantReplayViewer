@@ -43,6 +43,9 @@ export type SupportedShard = 'na' | 'pbe' | 'eu' | 'ap' | 'kr';
 export const SUPPORTED_REGIONS: SupportedRegion[] = ['na', 'latam', 'eu', 'ap', 'kr', 'br'];
 export const SUPPORTED_SHARDS: SupportedShard[] = ['na', 'pbe', 'eu', 'ap', 'kr'];
 
+export type LogLevel = 'log' | 'error' | 'warn' | 'debug' | 'verbose';
+export const LOG_LEVELS: LogLevel[] = ['log', 'error', 'warn', 'debug', 'verbose'];
+
 export interface ConfigOverrides {
     overrides: {
         'valorant-api': {
@@ -68,11 +71,21 @@ export interface EffectiveConfig {
     configurations: {
         app: {
             port: number;
+            logging: {
+                levels: LogLevel[];
+                'file-levels'?: LogLevel[];
+                'max-log-files': number;
+            };
             'additional-cors-origins': string[];
         };
         'valorant-version-read': {
             'retry-timeout-ms': number;
             regex: string;
+        };
+        'update-check': {
+            'check-interval-seconds': number;
+            'github-user': string;
+            'github-repo': string;
         };
     };
     version: {
