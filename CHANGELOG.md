@@ -1,27 +1,17 @@
-## Changelog Version 0.10.0
-### Security Changes
-- Bunch of hardening to Origin checks.
-- Now strictly bound to ``127.0.0.1`` / localhost. This was a major screw up on my behalf before.
-Although it did not allow for access of Riot Credentials it allowed for access of the VRV API in the local network you were in.
-Sorry!
+## Changelog Version 0.11.0
+### Import Flows
+You can now see why / how a replay was imported.
+Currently supported are:
+- "Downloaded manually": You triggered the download manually
+- "Auto-archived": The match data was downloaded due to archiving rules
+- "Injection Placeholder": The Match data was downloaded to facilitate the replay injection
+- "Uploaded": The file was manually uploaded into the application
 
-### Update Checks
-- The app will now periodically check against the GitHub repository for updates and allow you to easily download a newer
-version.
-- You will now also be able to see some details about the new version in an extra tab for it.
+### Auto Archive
+You can now automatically archive matches you have played based on the following rules:
+- "All matches": All matches that finish while VRV is connected.
+- "Only selected": All matches that are within the selected set of queue IDs
+- "All except selected": All matches that are NOT within the selected set of queueIDs
+- "None": None, effectively disables this feature
 
-### App Changes
-- The app now also has an icon.
-- The app now runs without a visible console.
-- If you still want the "console" feel you can start the app via cmd or PowerShell running: ``.\ValorantReplayViewer.exe``
-in the directory of the executable. This will behave similar to the previous console-bound executables.
-- You can still shutdown the app via the "Power" buttons in the UI.
-
-### Logging
-- Log files can be found under ``%LOCALAPPDATA%\ValorantReplayViewer\logs``
-
-### Performance Stats
-- The Versus Tab shows a simple summary of the performance stats for each player. 
-
-*I am still not that happy with how this currently looks as its just a bunch of data thrown together, maybe I will come 
-up with a better way of displaying it in the future*
+These options can be set for "stats" (meaning the metadata json file) or "replays" (meaning the .vrf replays) independently.
