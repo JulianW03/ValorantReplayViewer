@@ -2,6 +2,11 @@ import * as ResEdit from "resedit"
 import path from "path";
 import fs from "fs"
 
+const SUBSYTEM = {
+    HEADLESS: 2,
+    CONSOLE_WINDOW: 3
+}
+
 const targetExecutable = process.argv[2]
 
 if (!targetExecutable) {
@@ -39,5 +44,5 @@ const oldSubsystem = exe.newHeader.optionalHeader.subsystem;
 /**
  * @see https://learn.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.vcprojectengine.subsystemoption
  * */
-exe.newHeader.optionalHeader.subsystem = 2;
+exe.newHeader.optionalHeader.subsystem = SUBSYTEM.HEADLESS;
 fs.writeFileSync(targetExecutable, Buffer.from(exe.generate()));
