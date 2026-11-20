@@ -1,19 +1,21 @@
 ## Changelog Version 0.11.0
 ### Import Flows
-You can now see why / how a replay was imported.
-Currently supported are:
+You can now see why/how a replay was imported.
+
+Currently supported import reasons are:
+
 - "Downloaded manually": You triggered the download manually
-- "Auto-archived": The match data was downloaded due to archiving rules
-- "Injection Placeholder": The Match data was downloaded to facilitate the replay injection
-- "Uploaded": The file was manually uploaded into the application
+- "Auto-archived": The match data was downloaded due to archiving rules.
+- "Injection Placeholder": The match data was downloaded to facilitate replay injection.
+- "Uploaded": The file was manually uploaded into the application.
 
 ### Auto Archive
 You can now automatically archive matches you have played based on the following rules:
 - "All matches": All matches that finish while VRV is connected.
-- "Only selected": All matches that are within the selected set of queue IDs
-- "All except selected": All matches that are NOT within the selected set of queueIDs
-- "None": None, effectively disables this feature
+- "Only selected": All matches whose queue IDs are included in the selected set.
+- "All except selected": All matches whose queue IDs are NOT included in the selected set.
+- "None": No matches are archived. This effectively disables the feature.
 
-These options can be set for "stats" (meaning the metadata json file) or "replays" (meaning the .vrf replays) independently.
+These options can be configured independently for "stats" (meaning the metadata JSON file) and "replays" (meaning the .vrf replay files).
 
-This feature is disabled by default, so if you dont want to use it you dont need to change anything!
+This feature is disabled by default, so if you don't want to use it, you don't need to change anything!
