@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigLoader, SYMBOL_CONFIG } from '@/config/configLoader';
+import { ConfigLoader, SYMBOL_APP_VERSION, SYMBOL_CONFIG } from '@/config/configLoader';
 import { ConfigController } from '@/config/ConfigController';
 import { ConfigLogger } from '@/config/ConfigLogger';
 
@@ -15,8 +15,13 @@ import { ConfigLogger } from '@/config/ConfigLogger';
             useFactory: (loader: ConfigLoader) => loader.getEffectiveConfig(),
             inject: [ConfigLoader],
         },
+        {
+            provide: SYMBOL_APP_VERSION,
+            useFactory: (loader: ConfigLoader) => loader.getAppVersion(),
+            inject: [ConfigLoader],
+        },
         ConfigLogger,
     ],
-    exports: [ConfigLoader, SYMBOL_CONFIG],
+    exports: [ConfigLoader, SYMBOL_CONFIG, SYMBOL_APP_VERSION],
 })
 export class ConfigurationModule {}

@@ -7,7 +7,7 @@ import { EmittingMapDataBehavior } from '@/core/data/behaviors/emission/Emitting
 import { EventType } from '@/core/events/EventTypes';
 import { KeyUpdateActionType, KeyValueUpdatedEvent, StateUpdatedEvent } from '@/core/events/BasicEvent';
 import { Injectable } from '@nestjs/common';
-import { ProductSessionDTO } from '#/schemas/ProductSession.schema';
+import { ProductSessionDTO } from '@vrv/shared';
 
 export type SessionId = string;
 

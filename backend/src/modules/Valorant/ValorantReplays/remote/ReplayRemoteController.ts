@@ -13,8 +13,13 @@ import { ApiAcceptedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation }
 import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
 import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/ReplayManager';
 import { ProductSessionGuard, RequiredProduct } from '@/modules/ProductSessionModule/ProductSessionGuard';
-import { type DownloadStateDTO, DownloadStateDTOSchema } from '#/schemas/DownloadState.schema';
-import { type MatchIdParam, MatchIdParamSchema } from '#/schemas/replays/ReplayStorageApi.schema';
+import {
+    type DownloadStateDTO,
+    DownloadStateDTOSchema,
+    ImportFlowIdSchema,
+    type MatchIdParam,
+    MatchIdParamSchema,
+} from '@vrv/shared';
 
 class DownloadStateModel extends createZodDto(DownloadStateDTOSchema) {
 }
@@ -73,7 +78,7 @@ export class ReplayRemoteController {
     }
 
     private startDownload(matchId: string, retry: boolean): void {
-        this.replayManager.triggerDownload(matchId, retry).catch((e) => {
+        this.replayManager.triggerDownload(matchId, ImportFlowIdSchema.enum.MANUAL_DOWNLOAD, retry).catch((e) => {
             this.logger.warn(`Download of match ${matchId} did not complete`, e);
         });
     }

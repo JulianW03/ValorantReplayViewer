@@ -1,7 +1,7 @@
 {
   "version": {
     "config": 1,
-    "app": "0.10.0"
+    "app": "0.11.0"
   },
   "filepaths": {
     "riot-games-folder": {
@@ -35,6 +35,10 @@
       "check-interval-seconds": 1800,
       "github-user": "JulianW03",
       "github-repo": "ValorantReplayViewer"
+    },
+    "auto-archive": {
+      "initial-delay-ms": 1000,
+      "retry-delays-ms": [30000, 120000, 300000]
     }
   },
   "overrides": {

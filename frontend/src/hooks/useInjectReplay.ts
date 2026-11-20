@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useProductSession, useShippingVersion, useStartInject } from '@/lib/queries';
 import { checkCompatibility, VersionComparisonResult } from '@/lib/VersionUtils';
-import type { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
+import type { ReplayMetadataV2 } from '@vrv/shared';
 
 type DisabledInfo = {
     isDisabled: boolean;

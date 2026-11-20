@@ -1,25 +1,27 @@
 import * as LocalLinkResolver from '@/lib/LocalLinkResolver.ts';
-import type { DownloadStateDTO } from '#/schemas/DownloadState.schema.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import type { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema.ts';
-import type { ProductSessionDTO } from '#/schemas/ProductSession.schema.ts';
-import type { PlayerUuidDTO } from '#/schemas/PlayerUuid.schema.ts';
-import type { MapAssetDTO } from '#/schemas/assets/MapAssetDTO.ts';
-import type { AgentAssetDTO } from '#/schemas/assets/AgentAssetDTO.ts';
-import type { WeaponAssetDTO } from '#/schemas/assets/WeaponAssetDTO.ts';
-import type { GearAssetDTO } from '#/schemas/assets/GearAssetDTO.ts';
-import type { ReplayMetadataV2, RiotMatchMetadata, UserMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
-import type { MinimalVersionInfo } from '#/dto/MinimalVersionInfo.ts';
-import type { StorageStatusDTO } from '#/schemas/StorageStatusDTO.ts';
-import type { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema.ts';
-import type { SocialPresence } from '#/schemas/SocialPresence/SocialPresence.schema.ts';
-import type { UpdateStatus } from '#/schemas/updateCheck/UpdateStatus.schema.ts';
+import type { DownloadStateDTO } from '@vrv/shared';
+import type { GUID } from '@vrv/shared';
+import type { PlayerAliasDTO } from '@vrv/shared';
+import type { ProductSessionDTO } from '@vrv/shared';
+import type { PlayerUuidDTO } from '@vrv/shared';
+import type { MapAssetDTO } from '@vrv/shared';
+import type { AgentAssetDTO } from '@vrv/shared';
+import type { WeaponAssetDTO } from '@vrv/shared';
+import type { GearAssetDTO } from '@vrv/shared';
+import type { ReplayMetadataV2, RiotMatchMetadata, UserMetadata } from '@vrv/shared';
+import type { MinimalVersionInfo } from '@vrv/shared';
+import type { StorageStatusDTO } from '@vrv/shared';
+import type { ReplayImportRequest } from '@vrv/shared';
+import type { SocialPresence } from '@vrv/shared';
+import type { UpdateStatus } from '@vrv/shared';
+import type { AppVersion } from '@vrv/shared';
 import type {
+    AutoArchiveSettings,
     DownloadStatesResponse,
     ReplayListResponse,
     UserMetadataPatch,
-} from '#/schemas/replays/ReplayStorageApi.schema.ts';
-import { InjectState as InjectStates, type InjectState, type InjectStatus } from '#/schemas/InjectStatus.schema.ts';
+} from '@vrv/shared';
+import { InjectState as InjectStates, type InjectState, type InjectStatus } from '@vrv/shared';
 
 export { InjectStates };
 export type { InjectState, InjectStatus };
@@ -86,6 +88,10 @@ export interface EffectiveConfig {
             'check-interval-seconds': number;
             'github-user': string;
             'github-repo': string;
+        };
+        'auto-archive': {
+            'initial-delay-ms': number;
+            'retry-delays-ms': number[];
         };
     };
     version: {
@@ -206,8 +212,17 @@ export const api = {
             return request<ReplayMetadataV2>(`/plugins/replay/storage/import?override=${override}`, { method: 'POST', body: formData });
         },
     },
+    autoArchive: {
+        getSettings: () => request<AutoArchiveSettings>('/plugins/replay/auto-archive'),
+        updateSettings: (settings: AutoArchiveSettings) =>
+            request<AutoArchiveSettings>('/plugins/replay/auto-archive', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings),
+            }),
+    },
     matchHistory: {
-        getRecentMatches: ({ after, limit }: { after: GUID | null, limit: number }) => {
+        getRecentMatches:({ after, limit }: { after: GUID | null, limit: number }) => {
             const params = new URLSearchParams();
             if (after) {
                 params.set('after', after);
@@ -259,6 +274,7 @@ export const api = {
     },
     config: {
         getCurrent: () => request<EffectiveConfig>('/configuration/current'),
+        getVersion: () => request<AppVersion>('/configuration/version'),
         getOverrides: () => request<ConfigOverrides>('/configuration/overrides'),
         saveOverrides: (overrides: ConfigOverrides) =>
             request<ConfigOverrides>('/configuration/overrides', {

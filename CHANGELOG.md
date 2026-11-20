@@ -1,27 +1,21 @@
-## Changelog Version 0.10.0
-### Security Changes
-- Bunch of hardening to Origin checks.
-- Now strictly bound to ``127.0.0.1`` / localhost. This was a major screw up on my behalf before.
-Although it did not allow for access of Riot Credentials it allowed for access of the VRV API in the local network you were in.
-Sorry!
+## Changelog Version 0.11.0
+### Import Flows
+You can now see why/how a replay was imported.
 
-### Update Checks
-- The app will now periodically check against the GitHub repository for updates and allow you to easily download a newer
-version.
-- You will now also be able to see some details about the new version in an extra tab for it.
+Currently supported import reasons are:
 
-### App Changes
-- The app now also has an icon.
-- The app now runs without a visible console.
-- If you still want the "console" feel you can start the app via cmd or PowerShell running: ``.\ValorantReplayViewer.exe``
-in the directory of the executable. This will behave similar to the previous console-bound executables.
-- You can still shutdown the app via the "Power" buttons in the UI.
+- "Downloaded manually": You triggered the download manually
+- "Auto-archived": The match data was downloaded due to archiving rules.
+- "Injection Placeholder": The match data was downloaded to facilitate replay injection.
+- "Uploaded": The file was manually uploaded into the application.
 
-### Logging
-- Log files can be found under ``%LOCALAPPDATA%\ValorantReplayViewer\logs``
+### Auto Archive
+You can now automatically archive matches you have played based on the following rules:
+- "All matches": All matches that finish while VRV is connected.
+- "Only selected": All matches whose queue IDs are included in the selected set.
+- "All except selected": All matches whose queue IDs are NOT included in the selected set.
+- "None": No matches are archived. This effectively disables the feature.
 
-### Performance Stats
-- The Versus Tab shows a simple summary of the performance stats for each player. 
+These options can be configured independently for "stats" (meaning the metadata JSON file) and "replays" (meaning the .vrf replay files).
 
-*I am still not that happy with how this currently looks as its just a bunch of data thrown together, maybe I will come 
-up with a better way of displaying it in the future*
+This feature is disabled by default, so if you don't want to use it, you don't need to change anything!

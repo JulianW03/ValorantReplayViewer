@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { BugPlay, Loader2 } from 'lucide-react';
 import { useInjectReplay } from '@/hooks/useInjectReplay';
-import type { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
+import type { ReplayMetadataV2 } from '@vrv/shared';
 import { InjectTooltip } from '@/components/saved-replays/InjectTooltip.tsx';
 
 export type InjectButtonProps = {

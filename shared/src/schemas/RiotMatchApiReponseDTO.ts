@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GUIDSchema } from '#/schemas/GUIDSchema';
+import { GUIDSchema } from './GUIDSchema';
 
 export const TWO_TEAM_ROLE_IDS = {
     ATTACKER: 'Attacker',

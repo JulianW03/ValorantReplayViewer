@@ -1,0 +1,30 @@
+{
+  "name": "@vrv/shared",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsdown"
+  },
+  "dependencies": {
+    "zod": "^4.5.2"
+  },
+  "devDependencies": {
+    "tsdown": "^0.23.0",
+    "typescript": "^5.9.3"
+  }
+}

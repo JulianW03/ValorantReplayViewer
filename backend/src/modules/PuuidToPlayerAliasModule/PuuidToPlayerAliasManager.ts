@@ -5,9 +5,7 @@ import { PlayerAccountLookupV2NamesetsForPuuidResponse, PluginPlayerAccountApi }
 import { AsyncMapDataBehavior } from '@/core/data/behaviors/async/AsyncMapDataBehavior';
 import { IMapDataManager } from '@/core/data/interfaces/IMapDataManager';
 import { SimpleMapDataManager } from '@/core/data/SimpleMapDataManager';
-import { GUID } from '#/schemas/GUIDSchema';
-import { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema';
-import { AsyncResult } from '#/utils/AsyncResult';
+import { AsyncResult, GUID, PlayerAliasDTO } from '@vrv/shared';
 
 export type PuuidToPlayerAliasErrorUnion = NetworkRequestError;
 

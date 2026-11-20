@@ -9,9 +9,11 @@ import {
     EnvConfigV1DTOSchema,
     OverridableConfigV1,
     OverridableConfigV1Schema,
+    VersionConfig,
 } from '@/config/ConfigV1.schema';
 
 export const SYMBOL_CONFIG = Symbol('CONFIG');
+export const SYMBOL_APP_VERSION = Symbol('APP_VERSION');
 
 /**
  * The resolved, effective config as injected under {@link SYMBOL_CONFIG}.
@@ -20,6 +22,7 @@ export const SYMBOL_CONFIG = Symbol('CONFIG');
 export type AppConfig = EnvConfigV1DTO;
 
 export const InjectConfig = () => Inject(SYMBOL_CONFIG);
+export const InjectAppVersion = () => Inject(SYMBOL_APP_VERSION);
 
 // lodash merges arrays index by index, so overriding ['log', 'error', 'warn'] with ['error'] would yield ['error', 'error', 'warn'].
 const replaceArrays = (_base: unknown, override: unknown) => (Array.isArray(override) ? override : undefined);
@@ -33,6 +36,7 @@ export class ConfigLoader {
 
     private staticConfig?: Promise<EnvConfigV1DTO>;
     private effectiveConfig?: Promise<EnvConfigV1DTO>;
+    private appVersion?: Promise<VersionConfig>;
 
     public getPersistentPath(): string {
         const localAppData =
@@ -73,13 +77,22 @@ export class ConfigLoader {
         return this.effectiveConfig;
     }
 
+    /**
+     * Resolved once from the shipped config and kept across {@link invalidate}: the version cannot be overridden.
+     */
+    public getAppVersion(): Promise<VersionConfig> {
+        this.appVersion ??= this.getStaticConfig().then((config) => config.version);
+        return this.appVersion;
+    }
+
     public invalidate(): void {
         this.staticConfig = undefined;
         this.effectiveConfig = undefined;
     }
 
     private async computeEffectiveConfig(): Promise<EnvConfigV1DTO> {
-        const base = await this.getStaticConfig();
+        const version = await this.getAppVersion();
+        const base = { ...(await this.getStaticConfig()), version };
 
         try {
             const overrides = await this.getConfigOverrides();

@@ -4,12 +4,8 @@ import { useRelativeTime } from '@/hooks/useRelativeTime'
 import type { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useEffectiveConfig, useUpdateStatus } from '@/lib/queries'
-import {
-    UnknownStatusReason,
-    UpdateStatusIndicator,
-    type UpdateStatus,
-} from '#/schemas/updateCheck/UpdateStatus.schema.ts'
+import { useAppVersion, useUpdateStatus } from '@/lib/queries'
+import { UnknownStatusReason, type UpdateStatus, UpdateStatusIndicator } from '@vrv/shared'
 
 const UNKNOWN_REASON_TEXT: Record<z.infer<typeof UnknownStatusReason>, string> = {
     [UnknownStatusReason.enum.NO_FETCH_YET]: 'Checking for updates…',
@@ -59,8 +55,8 @@ function InfoRow({ label, children }: { label: string, children: React.ReactNode
 
 export function UpdateCheckPage() {
     const status = useUpdateStatus()
-    const { data: effectiveConfig } = useEffectiveConfig()
-    const currentVersion = effectiveConfig?.version?.app
+    const { data: appVersion } = useAppVersion()
+    const currentVersion = appVersion?.app
 
     if (status === null) {
         return (

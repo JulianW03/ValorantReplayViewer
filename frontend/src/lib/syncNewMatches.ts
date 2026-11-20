@@ -2,9 +2,7 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queries';
 import { useAppStore } from '@/store/useAppStore';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import type { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
-import { compareMatchOrder } from '#/utils/MatchOrdering.ts';
+import { compareMatchOrder, type GUID, type RiotMatchMetadata } from '@vrv/shared';
 
 /**
  * Keeps the `recentMatches` query cache in sync with `ValorantMatchStatsManager` WS

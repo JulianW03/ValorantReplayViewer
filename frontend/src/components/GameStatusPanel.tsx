@@ -1,5 +1,5 @@
 import { useGameLoopState, useProductSession, useSocialPresenceRegistry } from '@/lib/queries.ts';
-import type { SocialPresence } from '#/schemas/SocialPresence/SocialPresence.schema.ts';
+import type { SocialPresence } from '@vrv/shared';
 
 const STATE_META = {
     MENUS: { label: 'Menus' },

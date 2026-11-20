@@ -7,11 +7,9 @@ import { distinctUntilChanged, filter, map, Subscription } from 'rxjs';
 import { onSource } from '@/core/events/adapters/rxjsAdapters';
 import { EventType } from '@/core/events/EventTypes';
 import { KeyValueUpdatedEvent, StateUpdatedEvent } from '@/core/events/BasicEvent';
-import { GUID } from '#/schemas/GUIDSchema';
-import { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema';
-import { AsyncResult } from '#/utils/AsyncResult';
-import { PlayerUuidDTO } from '#/schemas/PlayerUuid.schema';
+import { AsyncResult, GUID, PlayerUuidDTO, RiotMatchMetadata } from '@vrv/shared';
 import { AccountPuuidManager } from '@/modules/Account/AccountPuuidModule/AccountPuuidManager';
+import { isPracticeMatch } from '@/modules/Valorant/MatchHistory/isPracticeMatch';
 
 @Injectable()
 export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModuleDestroy {
@@ -82,9 +80,7 @@ export class MatchHistoryManager implements DataDeletable, OnModuleInit, OnModul
     }
 
     private shouldAppear(_metadata: RiotMatchMetadata): boolean {
-        // We dont want Practice matches
-        if (_metadata.matchMetadata.matchInfo.provisioningFlowID === "ShootingRange") return false;
-        return true;
+        return !isPracticeMatch(_metadata.matchMetadata.matchInfo);
     }
 
     private async loadMore(count = 20): Promise<void> {

@@ -1,6 +1,6 @@
 import { FacingDirections, type ItemProps } from './SlantedDisplay.tsx';
 import { useAgentRegistry } from '@/lib/queries.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
+import type { GUID } from '@vrv/shared';
 
 export interface AgentDisplayProps extends ItemProps {
     agentId: GUID,

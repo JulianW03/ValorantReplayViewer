@@ -1,0 +1,1 @@
+ALTER TABLE `replays` ADD `import_flow_id` text;

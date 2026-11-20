@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { PlayerAliasSchema } from '#/schemas/PlayerAlias.schema';
-import { RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
-import { GUIDSchema } from '#/schemas/GUIDSchema';
+import { PlayerAliasSchema } from './PlayerAlias.schema';
+import { RiotMatchApiResponseDTOSchema } from './RiotMatchApiReponseDTO';
+import { GUIDSchema } from './GUIDSchema';
 
 export const DownloaderMetadataSchema = z.object({
     downloadedAt: z.number(),
@@ -26,9 +26,17 @@ export const ReplayFileMetadataSchema = z.object({
     checksum: z.string().nonempty(),
 });
 
+export const ImportFlowIdSchema = z.enum([
+    'MANUAL_DOWNLOAD',
+    'AUTO_ARCHIVE',
+    'INJECTION_PLACEHOLDER',
+    'FILE_UPLOAD',
+]);
+
 export const ReplayMetadataV2Schema = z.object({
     formatVersion: z.number(),
     uuid: z.uuid(),
+    importFlowId: ImportFlowIdSchema.optional().nullable(),
     downloaderMetadata: DownloaderMetadataSchema.optional().nullable(),
     riotMatchMetadata: RiotMatchMetadataSchema.optional().nullable(),
     replayFileMetadata: ReplayFileMetadataSchema.optional().nullable(),
@@ -37,6 +45,7 @@ export const ReplayMetadataV2Schema = z.object({
 
 export const CURRENT_REPLAY_FORMAT_VERSION = 3;
 
+export type ImportFlowId = z.infer<typeof ImportFlowIdSchema>;
 export type DownloaderMetadata = z.infer<typeof DownloaderMetadataSchema>;
 export type RiotMatchMetadata = z.infer<typeof RiotMatchMetadataSchema>;
 export type ReplayFileMetadata = z.infer<typeof ReplayFileMetadataSchema>;

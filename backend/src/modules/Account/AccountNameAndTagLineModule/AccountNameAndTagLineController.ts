@@ -4,7 +4,7 @@ import {
 } from '@/modules/Account/AccountNameAndTagLineModule/AccountNameAndTagLineManager';
 import { ApiNotFoundResponse, ApiResponse } from '@nestjs/swagger';
 import { RiotClientReadyGuard } from '@/core/riotclient/RiotClientReadyGuard';
-import { PlayerAliasSchema } from '#/schemas/PlayerAlias.schema';
+import { PlayerAliasSchema } from '@vrv/shared';
 import { createZodDto } from 'nestjs-zod';
 
 class PlayerAliasModel extends createZodDto(PlayerAliasSchema) {

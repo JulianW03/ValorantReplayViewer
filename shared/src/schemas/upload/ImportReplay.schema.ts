@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserMetadataSchema } from '#/schemas/ReplayFormatV2.schema';
+import { UserMetadataSchema } from '../ReplayFormatV2.schema';
 
 export const ReplayFileTypeSchema = z.enum([
     "package",

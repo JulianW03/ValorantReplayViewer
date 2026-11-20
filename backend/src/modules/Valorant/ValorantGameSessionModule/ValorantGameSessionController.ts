@@ -13,7 +13,7 @@ import { ValorantGameSessionManager } from '@/modules/Valorant/ValorantGameSessi
 import { ProductSessionGuard, RequiredProduct } from '@/modules/ProductSessionModule/ProductSessionGuard';
 import { MatchStatusDTO } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatusDTO.schema';
 import { MatchStatusSchema } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatus.schema';
-import type { GUID } from '#/schemas/GUIDSchema';
+import type { GUID } from '@vrv/shared';
 
 @RequiredProduct('valorant')
 @UseGuards(RiotClientReadyGuard, ProductSessionGuard)

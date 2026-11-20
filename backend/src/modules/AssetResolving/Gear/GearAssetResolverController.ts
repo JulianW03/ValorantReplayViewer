@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { GearAssetResolverManager, GearId } from '@/modules/AssetResolving/Gear/GearAssetResolverManager';
 import { AssetResolverController } from '@/modules/AssetResolving/common/AssetResolverController';
-import { GearAssetDTO } from '#/schemas/assets/GearAssetDTO';
+import { GearAssetDTO } from '@vrv/shared';
 
 @Controller({
     path: 'assets/gear',

@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { GUIDSchema } from '#/schemas/GUIDSchema';
-import { PaginationQuerySchema, PaginationResultSchema } from '#/schemas/Pagination.schema';
-import { ReplayMetadataV2Schema, UserMetadataSchema } from '#/schemas/ReplayFormatV2.schema';
-import { DownloadStateDTOSchema } from '#/schemas/DownloadState.schema';
+import { GUIDSchema } from '../GUIDSchema';
+import { PaginationQuerySchema, PaginationResultSchema } from '../Pagination.schema';
+import { ReplayMetadataV2Schema, UserMetadataSchema } from '../ReplayFormatV2.schema';
+import { DownloadStateDTOSchema } from '../DownloadState.schema';
 
 export const MatchIdParamSchema = z.object({
     matchId: GUIDSchema,

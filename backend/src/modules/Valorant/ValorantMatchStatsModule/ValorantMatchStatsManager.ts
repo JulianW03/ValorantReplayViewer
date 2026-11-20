@@ -7,10 +7,8 @@ import { PuuidToPlayerAliasManager } from '@/modules/PuuidToPlayerAliasModule/Pu
 import { AsyncMapDataBehavior } from '@/core/data/behaviors/async/AsyncMapDataBehavior';
 import { SimpleMapDataManager } from '@/core/data/SimpleMapDataManager';
 import { EmittingMapDataBehavior } from '@/core/data/behaviors/emission/EmittingMapDataBehavior';
-import { GUID } from '#/schemas/GUIDSchema';
+import { AsyncResult, GUID, RiotMatchMetadata } from '@vrv/shared';
 import { MatchStatus, MatchStatusSchema } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatus.schema';
-import { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema';
-import { AsyncResult } from '#/utils/AsyncResult';
 
 @Injectable()
 export class ValorantMatchStatsManager

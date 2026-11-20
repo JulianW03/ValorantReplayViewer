@@ -1,5 +1,4 @@
-import { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
-import { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema';
+import { ReplayImportRequest, ReplayMetadataV2 } from '@vrv/shared';
 
 export interface ImportData {
     metadata: ReplayMetadataV2

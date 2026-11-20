@@ -1,4 +1,5 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type { ImportFlowId } from '@vrv/shared';
 import { file_storage } from './fileStorage.schema';
 
 export const replays = sqliteTable(
@@ -9,6 +10,8 @@ export const replays = sqliteTable(
         imported_at_s: integer('imported_at_s')
             .$defaultFn(() => Math.floor(Date.now() / 1000))
             .notNull(),
+
+        import_flow_id: text('import_flow_id').$type<ImportFlowId>(),
 
         replay_file_uuid: text('replay_file_uuid')
             .references(() => file_storage.uuid, {

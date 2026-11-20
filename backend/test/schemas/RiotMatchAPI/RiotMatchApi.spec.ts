@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
+import { RiotMatchApiResponseDTOSchema } from '@vrv/shared';
 
 describe('RiotMatchApi Schema', () => {
     it("The schema should validate example_1.json", async () => {

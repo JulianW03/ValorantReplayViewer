@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExternalURLSchema } from '#/schemas/ExternalURL.schema';
+import { ExternalURLSchema } from '../ExternalURL.schema';
 
 export const AgentAssetDTOSchema = z.object({
     displayName: z.string(),

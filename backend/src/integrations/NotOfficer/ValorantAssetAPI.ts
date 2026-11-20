@@ -1,9 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { VALORANT_API_BASE_URL } from '@/integrations/NotOfficer/ValorantAPITokens';
-import { AgentAssetDTOSchema } from '#/schemas/assets/AgentAssetDTO';
-import { GearAssetDTOSchema } from '#/schemas/assets/GearAssetDTO';
-import { WeaponAssetDTOSchema } from '#/schemas/assets/WeaponAssetDTO';
-import { MapAssetDTOSchema } from '#/schemas/assets/MapAssetDTO';
+import { AgentAssetDTOSchema, GearAssetDTOSchema, MapAssetDTOSchema, WeaponAssetDTOSchema } from '@vrv/shared';
 import { z, ZodType } from 'zod';
 
 @Injectable()

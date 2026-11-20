@@ -13,14 +13,13 @@ import { SimpleObjectDataManager } from '@/core/data/SimpleObjectDataManager';
 import { EventType } from '@/core/events/EventTypes';
 import { RiotValorantAPIReadyState } from '@/integrations/riot/RiotValorantAPIReadyState';
 import { RegionToDefaultShardMap } from '@/config/ConfigV1.schema';
-import { RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
-import { ProductSessionDTO } from '#/schemas/ProductSession.schema';
+import { ProductSessionDTO, RiotMatchApiResponseDTOSchema } from '@vrv/shared';
 import { type AppConfig, InjectConfig } from '@/config/configLoader';
 import {
     AccoladeApiSpec,
     AccoladeInfoFromRiotSchema,
     ConnectionStateSchema,
-    DeploymentContext,
+    DeploymentContext, MapPerformanceInfoSchema, MapPerformanceSpec,
     MatchApiSpec,
     MatchHistoryResponseSchema,
     ReplayApiSpec,
@@ -31,6 +30,7 @@ import {
 
 
 export enum ValorantServiceUrl {
+    ACCOLADES = 'ACCOLADES',
     ACCOUNT_XP = 'ACCOUNT_XP',
     AGGSTATS = 'AGGSTATS',
     AGS = 'AGS',
@@ -65,6 +65,7 @@ export enum ValorantServiceUrl {
     PROGRESSION = 'PROGRESSION',
     // Your shop maybe ?
     PURCHASEMERCHANT = 'PURCHASEMERCHANT',
+    REGION_INDEX = 'REGION_INDEX',
     REPLAY_CATALOG = 'REPLAY_CATALOG',
     RESTRICTIONS = 'RESTRICTIONS',
     SESSION = 'SESSION',
@@ -266,6 +267,24 @@ export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy, Va
         },
     };
 
+    readonly mapPerformance: MapPerformanceSpec = {
+        getForPlayer: async (puuid, seasonId) => {
+            const { version } = this.getDeploymentContext();
+            const url = this.createUrl(ValorantServiceUrl.REGION_INDEX, `/region-index/v1/players/${puuid}?seasonID=${seasonId}`);
+
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders(version),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Map performance request failed with status ${response.status}`,
+                );
+            }
+
+            return await MapPerformanceInfoSchema.parseAsync(await response.json());
+        },
+    };
+
     readonly replays: ReplayApiSpec = {
         getSummary: async (matchId) => {
             const { version } = this.getDeploymentContext();
@@ -303,7 +322,7 @@ export class RiotValorantAPIManager implements OnModuleInit, OnModuleDestroy, Va
     readonly accolades: AccoladeApiSpec = {
         getForPlayer: async (puuid) => {
             const { version } = this.getDeploymentContext();
-            const url = this.createUrl(ValorantServiceUrl.GOLDSTAR, `/goldstars/v1/players/${puuid}`);
+            const url = this.createUrl(ValorantServiceUrl.ACCOLADES, `/accolades/v1/players/${puuid}`);
 
             const response = await fetch(url, {
                 headers: this.getAuthHeaders(version),

@@ -9,7 +9,7 @@ import { useRelativeTime } from '@/hooks/useRelativeTime';
 import { mapDisplayName, truncateId } from './formatters';
 import { useAppStore } from '@/store/useAppStore';
 import { OutdatedTag } from '@/components/OutdatedTag';
-import type { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema.ts';
+import type { ImportFlowId, ReplayMetadataV2 } from '@vrv/shared';
 
 import { ReplayEntryMenu } from './ReplayEntryMenu';
 import { ReplayEntryEditForm } from './ReplayEntryEditForm';
@@ -36,6 +36,13 @@ interface ReplayEntryProps {
     shownButtons?: ReplayRowButton[];
     defaultExpanded?: boolean;
 }
+
+const IMPORT_FLOW_LABELS: Record<ImportFlowId, string> = {
+    MANUAL_DOWNLOAD: 'Downloaded manually',
+    AUTO_ARCHIVE: 'Auto-archived',
+    INJECTION_PLACEHOLDER: 'Injection Placeholder',
+    FILE_UPLOAD: 'Uploaded',
+};
 
 // Small helper so every "we don't have this piece of data" case renders
 // the same way instead of each field inventing its own placeholder.
@@ -127,6 +134,11 @@ export function ReplayEntry({
                         ))}
                     </div>
                 ) : null}
+                {replay.importFlowId && (
+                    <Badge variant="outline" className="ml-auto shrink-0 text-[10px] font-normal text-muted-foreground">
+                        {IMPORT_FLOW_LABELS[replay.importFlowId]}
+                    </Badge>
+                )}
             </div>
 
             {/* Summary row */}

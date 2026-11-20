@@ -7,7 +7,7 @@ import { KeyDataUpdatable } from '@/core/data/interfaces/capabilities/KeyDataUpd
 import { DataDeletable } from '@/core/data/interfaces/capabilities/DataDeletable';
 import { KeyDataViewable } from '@/core/data/interfaces/capabilities/KeyDataViewable';
 import { MatchStatus, MatchStatusSchema } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatus.schema';
-import { GUID } from '#/schemas/GUIDSchema';
+import { GUID } from '@vrv/shared';
 
 @Injectable()
 export class ValorantGameSessionManager implements KeyDataUpdatable<GUID, MatchStatus>, DataDeletable, KeyDataViewable<GUID, MatchStatus> {

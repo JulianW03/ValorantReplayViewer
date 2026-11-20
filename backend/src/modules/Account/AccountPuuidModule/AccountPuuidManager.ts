@@ -5,8 +5,7 @@ import { SimpleObjectDataManager } from '@/core/data/SimpleObjectDataManager';
 import { OutputMappingCachingObjectBehavior } from '@/core/data/behaviors/viewMapping/OutputMappingCachingObjectBehavior';
 import { EmittingObjectDataBehavior } from '@/core/data/behaviors/emission/EmittingObjectDataBehavior';
 import { SimpleEventBus } from '@/core/events/SimpleEventBus';
-import { GUID } from '#/schemas/GUIDSchema';
-import { PlayerUuidDTO } from '#/schemas/PlayerUuid.schema';
+import { GUID, PlayerUuidDTO } from '@vrv/shared';
 
 @Injectable()
 export class AccountPuuidManager implements IObjectDataManager<EntitlementsToken, PlayerUuidDTO> {

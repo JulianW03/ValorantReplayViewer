@@ -17,6 +17,8 @@ import { ValorantMatchHistoryModule } from '@/modules/Valorant/MatchHistory/Matc
 import { ReplayInjectManagerV2 } from '@/modules/Valorant/ValorantReplays/injector/ReplayInjectManagerV2';
 import { ReplayDBModule } from '@/modules/Valorant/ValorantReplays/storage/db/ReplayDBModule';
 import { PathProviderModule } from '@/modules/PathProvider/PathProviderModule';
+import { ReplayAutoArchiveManager } from '@/modules/Valorant/ValorantReplays/autoArchive/ReplayAutoArchiveManager';
+import { AutoArchiveController } from '@/modules/Valorant/ValorantReplays/autoArchive/AutoArchiveController';
 
 @Module({
     imports: [
@@ -33,11 +35,12 @@ import { PathProviderModule } from '@/modules/PathProvider/PathProviderModule';
         PathProviderModule,
         ReplayDBModule,
     ],
-    providers: [ReplayManager, ReplayFetchManager, ReplayInjectManagerV2],
+    providers: [ReplayManager, ReplayFetchManager, ReplayInjectManagerV2, ReplayAutoArchiveManager],
     controllers: [
         ReplayController,
         ReplayRemoteController,
         ReplayInjectController,
+        AutoArchiveController,
     ],
 })
 export class ReplayModule {

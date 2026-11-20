@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BugPlay, ChevronDown, Clock, HardDrive, RefreshCw, Settings } from 'lucide-react';
+import { Archive, BugPlay, ChevronDown, Clock, HardDrive, RefreshCw, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Sidebar,
@@ -27,14 +27,59 @@ function UpdateDot() {
     return <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Update available" />;
 }
 
-const replayNavItems = [
+const libraryNavItems = [
     { title: 'Saved Matches', path: '/saved', icon: HardDrive },
+    { title: 'Auto Archive', path: '/auto-archive', icon: Archive },
+];
+
+const valorantNavItems = [
     { title: 'Recent Matches', path: '/recent', icon: Clock },
     { title: 'Injector', path: '/injector', icon: BugPlay },
 ];
 
+function NavGroup({ label, items }: { label: string; items: typeof libraryNavItems }) {
+    const [isOpen, setIsOpen] = useState(true);
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    return (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <SidebarGroup>
+                <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger className="flex w-full items-center justify-between">
+                        {label}
+                        <ChevronDown
+                            className={cn(
+                                'size-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
+                                isOpen && 'rotate-180',
+                            )}
+                        />
+                    </CollapsibleTrigger>
+                </SidebarGroupLabel>
+                <CollapsibleContent>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {items.map((item) => (
+                                <SidebarMenuItem key={item.path}>
+                                    <SidebarMenuButton
+                                        isActive={location.pathname === item.path}
+                                        onClick={() => navigate(item.path)}
+                                        tooltip={item.title}
+                                    >
+                                        <item.icon />
+                                        <span>{item.title}</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </CollapsibleContent>
+            </SidebarGroup>
+        </Collapsible>
+    );
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const [replayOpen, setReplayOpen] = useState(true);
     const [toolsOpen, setToolsOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -52,39 +97,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
             </SidebarHeader>
             <SidebarContent>
-                <Collapsible open={replayOpen} onOpenChange={setReplayOpen}>
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger className="flex w-full items-center justify-between">
-                                Replay Management
-                                <ChevronDown
-                                    className={cn(
-                                        'size-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
-                                        replayOpen && 'rotate-180',
-                                    )}
-                                />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {replayNavItems.map((item) => (
-                                        <SidebarMenuItem key={item.path}>
-                                            <SidebarMenuButton
-                                                isActive={location.pathname === item.path}
-                                                onClick={() => navigate(item.path)}
-                                                tooltip={item.title}
-                                            >
-                                                <item.icon />
-                                                <span>{item.title}</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
+                <NavGroup label="Library" items={libraryNavItems} />
+                <NavGroup label="Valorant" items={valorantNavItems} />
 
                 <Collapsible open={toolsOpen} onOpenChange={setToolsOpen}>
                     <SidebarGroup>

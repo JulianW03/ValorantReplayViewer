@@ -2,17 +2,18 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { RiotValorantAPIManager } from '@/integrations/riot/RiotValorantAPIManager';
 import { EntitlementTokenManager } from '@/modules/EntitlementTokenModule/EntitlementTokenManager';
 import { PuuidToPlayerAliasManager } from '@/modules/PuuidToPlayerAliasModule/PuuidToPlayerAliasManager';
-import { RiotMatchApiResponseDTO } from '#/schemas/RiotMatchApiReponseDTO';
-import { GUID } from '#/schemas/GUIDSchema';
-import { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema';
-import { CURRENT_REPLAY_FORMAT_VERSION, ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
+import {
+    CURRENT_REPLAY_FORMAT_VERSION,
+    GUID,
+    PlayerAliasDTO,
+    ReplayMetadataV2,
+    RiotMatchApiResponseDTO,
+    RiotMatchMetadata,
+} from '@vrv/shared';
 import { createHash } from 'node:crypto';
 import { ReplaySummary } from '@/integrations/riot/ValorantApiSpec';
 
-export interface CombinedReplayData {
-    metadata: ReplayMetadataV2;
-    replayBuffer?: Buffer;
-}
+export type FetchedMatchMetadata = ReplayMetadataV2 & { riotMatchMetadata: RiotMatchMetadata };
 
 interface ReplayData {
     buffer: Buffer;
@@ -30,29 +31,19 @@ export class ReplayFetchManager {
     ) {
     }
 
-    public async fetchCombinedReplayData(matchId: string): Promise<CombinedReplayData> {
-        const summary = await this.apiClient.matches.getDetails(matchId);
-        const shouldAttemptReplayDownload = summary.matchInfo.isReplayRecorded;
-        let replayData: ReplayData | undefined = undefined;
-        if (shouldAttemptReplayDownload) {
-            this.logger.log("Match has replay data, attempting to fetch.")
-            replayData = await this.getReplayData(matchId);
-        } else {
-            this.logger.log("No replay data available.")
-        }
-        const puuidResolver = await this.getPuuidResolverMap(summary);
-        const currrentId = this.tokenManager.getView()?.subject;
+    public async fetchMatchMetadata(matchId: string): Promise<FetchedMatchMetadata> {
+        return this.toMetadata(await this.apiClient.matches.getDetails(matchId));
+    }
 
-        const metadata = buildMetadata(
-            replayData,
-            summary,
-            puuidResolver,
-            currrentId,
-        );
-        return {
-            metadata,
-            replayBuffer: replayData?.buffer,
-        };
+    public async fetchReplayFile(matchId: string): Promise<Buffer> {
+        return (await this.getReplayData(matchId)).buffer;
+    }
+
+    private async toMetadata(matchDetails: RiotMatchApiResponseDTO): Promise<FetchedMatchMetadata> {
+        const puuidResolver = await this.getPuuidResolverMap(matchDetails);
+        const currentId = this.tokenManager.getView()?.subject;
+
+        return buildMetadata(matchDetails, puuidResolver, currentId);
     }
 
     private async getReplayData(matchId: string): Promise<ReplayData> {
@@ -107,16 +98,15 @@ export class ReplayFetchManager {
 }
 
 export function buildMetadata(
-    replayData: ReplayData | undefined,
     matchDetails: RiotMatchApiResponseDTO,
     puuidResolver: Record<GUID, PlayerAliasDTO>,
     subject: string | undefined,
-): ReplayMetadataV2 {
+): FetchedMatchMetadata {
 
     const concatId = matchDetails.matchInfo.matchId.substring(0, 8);
 
 
-    const obj: ReplayMetadataV2 = {
+    const obj: FetchedMatchMetadata = {
         formatVersion: CURRENT_REPLAY_FORMAT_VERSION,
         uuid: matchDetails.matchInfo.matchId,
         riotMatchMetadata: {
@@ -129,13 +119,6 @@ export function buildMetadata(
             notes: null,
         },
     };
-
-    if (replayData) {
-        obj.replayFileMetadata = {
-            fileSizeBytes: replayData.buffer.length,
-            checksum: replayData.summary.Checksum,
-        };
-    }
 
     if (subject) {
         obj.downloaderMetadata = {

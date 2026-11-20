@@ -15,6 +15,7 @@ import { ValorantVersionInfoManager } from '@/modules/Valorant/ValorantVersionIn
 import { ProductSessionManager } from '@/modules/ProductSessionModule/ProductSessionManager';
 import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/ReplayManager';
 import { ReplayInjectManagerV2 } from '@/modules/Valorant/ValorantReplays/injector/ReplayInjectManagerV2';
+import { ReplayAutoArchiveManager } from '@/modules/Valorant/ValorantReplays/autoArchive/ReplayAutoArchiveManager';
 import { SocialPresenceManager } from '@/modules/SocialPresence/SocialPresenceManager';
 import { UpdateCheckerManager } from '@/modules/UpdateChecker/UpdateCheckerManager';
 import { IncomingMessage } from 'node:http';
@@ -47,6 +48,7 @@ export class WSEventPublisher
         ValorantVersionInfoManager.name,
         ProductSessionManager.name,
         ReplayManager.name,
+        ReplayAutoArchiveManager.name,
         UpdateCheckerManager.name,
     ]);
 

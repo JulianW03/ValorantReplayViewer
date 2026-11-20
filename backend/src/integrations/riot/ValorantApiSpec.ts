@@ -1,6 +1,6 @@
 import z from 'zod';
 import { mapValues } from 'lodash';
-import { RiotMatchApiResponseDTO } from '#/schemas/RiotMatchApiReponseDTO';
+import { RiotMatchApiResponseDTO } from '@vrv/shared';
 
 export const ReplaySummarySchema = z.object({
     GameVersion: z.string().nonempty(),
@@ -124,7 +124,7 @@ export const MatchHistoryResponseSchema = z.object({
     BeginIndex: z.number(),
     EndIndex: z.number(),
     Total: z.number(),
-    History: z.array(MatchHistoryEntrySchema)
+    History: z.array(MatchHistoryEntrySchema),
 });
 
 export type MatchHistoryResponse = z.infer<typeof MatchHistoryResponseSchema>
@@ -135,6 +135,52 @@ const DeploymentContextSchema = z.object({
 });
 
 export type DeploymentContext = z.infer<typeof DeploymentContextSchema>
+
+
+const MapPerformanceMatchEntrySchema = z.object({
+    matchId: z.guid(),
+    agentId: z.guid(),
+    actIndexBefore: z.number(),
+    actIndexAfter: z.number(),
+    attackWinRate: z.number(),
+    defenseWinRate: z.number(),
+    outcome: z.enum(['Win', 'Loss', 'Draw']),
+});
+
+export const MapPerformanceInfoSchema = z.object({
+    subject: z.guid(),
+    platformGroup: z.string(),
+    seasonId: z.string(),
+    regionData: z.record(z.guid(), z.object({
+        regionId: z.guid(),
+        values: z.object({
+            winRate: z.number(),
+            attackWinRate: z.number(),
+            defenseWinRate: z.number(),
+            tempValueF: z.number(),
+            regionIndex: z.number(),
+            totalGames: z.number().nonnegative(),
+            computedFromValidSeasons: z.boolean(),
+        }),
+        deltaValues: z.object({
+            winRate: z.number(),
+            attackWinRate: z.number(),
+            defenseWinRate: z.number(),
+            tempValueF: z.number(),
+            regionIndex: z.number(),
+            totalGames: z.number().nonnegative(),
+            computedFromValidSeasons: z.boolean(),
+        }),
+        bestMatch: MapPerformanceMatchEntrySchema,
+        matchHistory: z.array(MapPerformanceMatchEntrySchema),
+        topAgents: z.array(z.object({
+            agentId: z.guid(),
+        })),
+        version: z.number().nonnegative()
+    })),
+});
+
+export type MapPerformanceInfo = z.infer<typeof MapPerformanceInfoSchema>
 
 export const ConnectionStateSchema = z.object({
     subject: z.guid(),
@@ -174,6 +220,10 @@ export interface ReplayApiSpec {
     downloadFile(matchId: string): Promise<Buffer>;
 }
 
+export interface MapPerformanceSpec {
+    getForPlayer(puuid: string, seasonId: string): Promise<MapPerformanceInfo>;
+}
+
 export interface AccoladeApiSpec {
     getForPlayer(puuid: string): Promise<AccoladeInfo>;
 }
@@ -186,5 +236,6 @@ export interface ValorantApiSpec {
     readonly matches: MatchApiSpec;
     readonly replays: ReplayApiSpec;
     readonly accolades: AccoladeApiSpec;
+    readonly mapPerformance: MapPerformanceSpec;
     readonly session: SessionApiSpec;
 }

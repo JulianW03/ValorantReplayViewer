@@ -5,7 +5,7 @@ import { DialogClose, DialogFooter } from '@/components/ui/dialog.tsx';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
 import { cn } from '@/lib/utils';
 import { useUploadReplay } from '@/lib/queries';
-import type { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema.ts';
+import type { ReplayImportRequest } from '@vrv/shared';
 
 export interface ReplayUploadFormProps {
     /** File extension this form accepts, e.g. ".vrp". */

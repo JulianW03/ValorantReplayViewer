@@ -7,9 +7,13 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion.tsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.tsx';
-import { type RiotMatchPlayer, TWO_TEAM_IDS, type TWO_TEAMS_TEAM_ID } from '#/schemas/RiotMatchApiReponseDTO.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import type { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema.ts';
+import {
+    type GUID,
+    type ReplayMetadataV2,
+    type RiotMatchPlayer,
+    TWO_TEAM_IDS,
+    type TWO_TEAMS_TEAM_ID,
+} from '@vrv/shared';
 import {
     buildDuelSummary,
     buildMatchIndex,

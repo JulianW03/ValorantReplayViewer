@@ -2,16 +2,26 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 import type { ConfigOverrides, MatchStatsResult } from '@/lib/api';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/store/useAppStore';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import { DownloadState, type DownloadStateDTO } from '#/schemas/DownloadState.schema.ts';
-import type { MapAssetDTO } from '#/schemas/assets/MapAssetDTO.ts';
-import type { AgentAssetDTO } from '#/schemas/assets/AgentAssetDTO.ts';
-import type { WeaponAssetDTO } from '#/schemas/assets/WeaponAssetDTO.ts';
-import type { GearAssetDTO } from '#/schemas/assets/GearAssetDTO.ts';
-import type { ProductSessionDTO } from '#/schemas/ProductSession.schema.ts';
-import type { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
-import type { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema.ts';
-import type { UserMetadataPatch } from '#/schemas/replays/ReplayStorageApi.schema.ts';
+import type { GUID } from '@vrv/shared';
+import {
+    availableParts,
+    downloadableParts,
+    type DownloadStateDTO,
+    failedParts,
+    isAnyDownloading,
+    isComplete,
+    type RiotMatchInfo,
+    storedParts,
+} from '@vrv/shared';
+import type { MapAssetDTO } from '@vrv/shared';
+import type { AgentAssetDTO } from '@vrv/shared';
+import type { WeaponAssetDTO } from '@vrv/shared';
+import type { GearAssetDTO } from '@vrv/shared';
+import type { ProductSessionDTO } from '@vrv/shared';
+import type { RiotMatchMetadata } from '@vrv/shared';
+import type { ReplayImportRequest } from '@vrv/shared';
+import type { UserMetadataPatch } from '@vrv/shared';
+import type { AutoArchiveSettings } from '@vrv/shared';
 
 // ---- Query keys ----
 
@@ -20,6 +30,7 @@ export const queryKeys = {
     playerAlias: ['playerAlias'] as const,
     playerUuid: ['playerUuid'] as const,
     storageStatus: ['storageStatus'] as const,
+    autoArchiveSettings: ['autoArchiveSettings'] as const,
     storedMatches: (page: number) => ['storedMatches', page] as const,
     currentShippingVersion: ['currentShippingVersion'] as const,
     recentMatches: ['recentMatches'] as const,
@@ -34,6 +45,7 @@ export const queryKeys = {
     gearRegistry: ['gearRegistry'] as const,
     productSessionRegistry: ['productSessionRegistry'] as const,
     effectiveConfig: ['effectiveConfig'] as const,
+    appVersion: ['appVersion'] as const,
     configOverrides: ['configOverrides'] as const,
     gameLoopState: ['gameLoopState'] as const,
     socialPresenceRegistry: ['socialPresenceRegistry'] as const,
@@ -107,6 +119,21 @@ export function useStorageStatus() {
     });
 }
 
+export function useAutoArchiveSettings() {
+    return useQuery({
+        queryKey: queryKeys.autoArchiveSettings,
+        queryFn: () => api.autoArchive.getSettings(),
+    });
+}
+
+export function useSaveAutoArchiveSettings() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (settings: AutoArchiveSettings) => api.autoArchive.updateSettings(settings),
+        onSuccess: (settings) => queryClient.setQueryData(queryKeys.autoArchiveSettings, settings),
+    });
+}
+
 export function useSetupStorage() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -121,6 +148,7 @@ export function useTeardownStorage() {
         mutationFn: () => api.storage.teardown(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.storageStatus });
+            queryClient.invalidateQueries({ queryKey: queryKeys.autoArchiveSettings });
             queryClient.invalidateQueries({ queryKey: ['storedMatches'] });
         },
     });
@@ -273,24 +301,22 @@ export function useDownloadState(matchId: string): DownloadStateDTO | undefined 
 }
 
 /**
- * Convenience boolean selectors derived from `useDownloadState`.
- * Use these in components to branch on the current state without
- * manually comparing `DownloadState` enum values.
+ * Match-level flags derived from the per-part states of `useDownloadState`. Parts the match cannot have, such as an
+ * unrecorded replay, never count as missing.
  */
-export function useDownloadStateFlags(matchId: string) {
-    const dto = useDownloadState(matchId) ?? undefined;
+export function useDownloadStateFlags(matchId: string, matchInfo: Pick<RiotMatchInfo, 'isReplayRecorded'>) {
+    const parts = useDownloadState(matchId)?.parts;
+    const available = availableParts(matchInfo);
+    const missingParts = downloadableParts(parts, available);
 
     return {
-        /** No entry exists or the last attempt failed — a download can be started. */
-        canDownload: dto === undefined || dto.state === DownloadState.FAILED,
-        /** A download is currently in progress. */
-        isDownloading: dto?.state === DownloadState.DOWNLOADING,
-        /** The download failed and can be retried. */
-        isFailed: dto?.state === DownloadState.FAILED,
-        /** The replay is locally stored and ready to use. */
-        isDownloaded: dto?.state === DownloadState.DOWNLOADED,
-        /** The raw DTO — useful when you need the state value itself. */
-        dto,
+        parts,
+        missingParts,
+        canDownload: missingParts.length > 0,
+        isDownloading: isAnyDownloading(parts),
+        isFailed: failedParts(parts).length > 0,
+        isComplete: isComplete(parts, available),
+        isPartial: storedParts(parts).length > 0 && missingParts.length > 0,
     } as const;
 }
 
@@ -546,6 +572,14 @@ export function useEffectiveConfig() {
         queryKey: queryKeys.effectiveConfig,
         queryFn: () => api.config.getCurrent(),
         staleTime: 30_000,
+    });
+}
+
+export function useAppVersion() {
+    return useQuery({
+        queryKey: queryKeys.appVersion,
+        queryFn: () => api.config.getVersion(),
+        staleTime: Infinity,
     });
 }
 

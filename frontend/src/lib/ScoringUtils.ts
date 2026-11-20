@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RiotMatchPlayerScoresSchema } from '#/schemas/RiotMatchApiReponseDTO.ts';
+import { RiotMatchPlayerScoresSchema } from '@vrv/shared';
 
 export const IndicatorKind = z.enum(
     [

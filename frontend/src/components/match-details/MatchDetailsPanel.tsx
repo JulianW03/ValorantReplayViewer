@@ -1,5 +1,6 @@
 import { TwoTeamDetailsPanel } from '@/components/match-details/twoTeams/TwoTeamDetailsPanel.tsx';
 import { FFAMatchDetailsPanel } from '@/components/match-details/ffa/FFAMatchDetailsPanel.tsx';
+import { KNOWN_QUEUE_IDS } from '@/lib/queueIds';
 
 export interface MinimalMatchTeam {
     teamId: string;
@@ -40,16 +41,6 @@ export interface MatchDetailsPanelProps {
     matchInfo: MinimalMatchInfo;
     highlightPlayer?: string;
 }
-
-export const KNOWN_QUEUE_IDS = {
-    COMPETITIVE: 'competitive',
-    SPIKE_RUSH: 'spikerush',
-    UNRATED: 'unrated',
-    SWIFTPLAY: 'swiftplay',
-    DEATHMATCH: 'deathmatch',
-    PREMIER: 'premier',
-    TEAM_DEATHMATCH: 'hurm'
-} as const;
 
 export const MatchDetailsPanel = (
     props: MatchDetailsPanelProps,

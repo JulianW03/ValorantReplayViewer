@@ -3,7 +3,7 @@ import {
     TWO_TEAM_ROLE_IDS,
     type TWO_TEAMS_ROLE_ID,
     type TWO_TEAMS_TEAM_ID,
-} from '#/schemas/RiotMatchApiReponseDTO.ts';
+} from '@vrv/shared';
 
 export const DISPLAY_ROUND_RESULTS = {
     WIN: 'WIN',

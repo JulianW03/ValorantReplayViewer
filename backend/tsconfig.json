@@ -15,7 +15,6 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "#/*": ["./shared/*"],
       "@/*": ["./src/*"]
     },
     "incremental": true,
@@ -27,7 +26,6 @@
     "noFallthroughCasesInSwitch": false
   },
   "include": [
-    "shared/**/*.ts",
     "src/**/*.ts",
     "types/**/*.ts",
     "test/**/*.ts"

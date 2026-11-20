@@ -9,7 +9,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog.tsx';
 import { cn } from '@/lib/utils';
-import { ReplayFileTypeSchema, type ReplayFileType } from '#/schemas/upload/ImportReplay.schema.ts';
+import { type ReplayFileType, ReplayFileTypeSchema } from '@vrv/shared';
 import { PackageUploadForm } from '@/components/saved-replays/upload/PackageUploadForm.tsx';
 import { RawReplayUploadForm } from '@/components/saved-replays/upload/RawReplayUploadForm.tsx';
 import { RiotMetadataUploadForm } from '@/components/saved-replays/upload/RiotMetadataUploadForm.tsx';

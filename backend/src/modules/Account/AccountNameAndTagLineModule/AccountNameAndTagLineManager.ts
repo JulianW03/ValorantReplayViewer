@@ -7,7 +7,7 @@ import {
     OutputMappingCachingObjectBehavior,
 } from '@/core/data/behaviors/viewMapping/OutputMappingCachingObjectBehavior';
 import { EmittingObjectDataBehavior } from '@/core/data/behaviors/emission/EmittingObjectDataBehavior';
-import { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema';
+import { PlayerAliasDTO } from '@vrv/shared';
 
 @Injectable()
 export class AccountNameAndTagLineManager implements IObjectDataManager<
