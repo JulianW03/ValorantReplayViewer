@@ -15,3 +15,5 @@ You can now automatically archive matches you have played based on the following
 - "None": None, effectively disables this feature
 
 These options can be set for "stats" (meaning the metadata json file) or "replays" (meaning the .vrf replays) independently.
+
+This feature is disabled by default, so if you dont want to use it you dont need to change anything!
