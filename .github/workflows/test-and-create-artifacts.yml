@@ -81,3 +81,8 @@ jobs:
             backend/package.json
             backend/pnpm-lock.yaml
             backend/pnpm-workspace.yaml
+            shared/package.json
+            shared/tsconfig.json
+            shared/tsdown.config.ts
+            shared/src
+            shared/dist

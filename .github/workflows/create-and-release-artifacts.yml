@@ -91,6 +91,11 @@ jobs:
             backend/package.json
             backend/pnpm-workspace.yaml
             backend/pnpm-lock.yaml
+            shared/package.json
+            shared/tsconfig.json
+            shared/tsdown.config.ts
+            shared/src
+            shared/dist
 
       - uses: actions/upload-artifact@v7
         with:
@@ -110,7 +115,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: backend-bundle
-          path: backend
+          path: .
 
       - uses: pnpm/action-setup@v6
         with:
