@@ -8,6 +8,7 @@ import {
     useConfigOverrides,
     useDeleteConfigOverrides,
     useEffectiveConfig,
+    useAppVersion,
     useSaveConfigOverrides,
 } from '@/lib/queries'
 import type { ConfigOverrides, EffectiveConfig, LogLevel, SupportedRegion, SupportedShard } from '@/lib/api'
@@ -37,6 +38,8 @@ interface FormState {
     updateCheckIntervalSeconds: string
     githubUser: string
     githubRepo: string
+    autoArchiveInitialDelayMs: string
+    autoArchiveRetryDelaysMs: string
     // filepaths
     riotGamesFolderEnvVar: string
     riotGamesFolderPath: string               // newline-delimited segments
@@ -58,6 +61,8 @@ const EMPTY_FORM: FormState = {
     updateCheckIntervalSeconds: '',
     githubUser: '',
     githubRepo: '',
+    autoArchiveInitialDelayMs: '',
+    autoArchiveRetryDelaysMs: '',
     riotGamesFolderEnvVar: '',
     riotGamesFolderPath: '',
     valorantSavedEnvVar: '',
@@ -89,11 +94,29 @@ function overridesToForm(overrides: ConfigOverrides | null): FormState {
             : '',
         githubUser: cfg?.['update-check']?.['github-user'] ?? '',
         githubRepo: cfg?.['update-check']?.['github-repo'] ?? '',
+        autoArchiveInitialDelayMs: cfg?.['auto-archive']?.['initial-delay-ms'] != null
+            ? String(cfg['auto-archive']['initial-delay-ms'])
+            : '',
+        autoArchiveRetryDelaysMs: formatDelayList(cfg?.['auto-archive']?.['retry-delays-ms'] ?? []),
         riotGamesFolderEnvVar: fp?.['riot-games-folder']?.relativeToEnvVar ?? '',
         riotGamesFolderPath: (fp?.['riot-games-folder']?.path ?? []).join('\n'),
         valorantSavedEnvVar: fp?.['valorant-saved']?.relativeToEnvVar ?? '',
         valorantSavedPath: (fp?.['valorant-saved']?.path ?? []).join('\n'),
     }
+}
+
+const DELAY_LIST_PATTERN = /^\s*[1-9]\d*(\s*,\s*[1-9]\d*)*\s*$/
+
+function formatDelayList(delays: number[]): string {
+    return delays.join(', ')
+}
+
+function isValidDelayList(text: string): boolean {
+    return !text.trim() || DELAY_LIST_PATTERN.test(text)
+}
+
+function parseDelayList(text: string): number[] | undefined {
+    return text.trim() ? text.split(',').map(Number) : undefined
 }
 
 function omitUndefined<T extends object>(obj: T): Partial<T> {
@@ -143,8 +166,12 @@ function formToOverrides(form: FormState, effective: EffectiveConfig | undefined
             'github-repo': form.githubRepo || effUpdateCheck?.['github-repo'],
         }
         : undefined
+    const autoArchive = omitUndefined({
+        'initial-delay-ms': form.autoArchiveInitialDelayMs ? Number(form.autoArchiveInitialDelayMs) : undefined,
+        'retry-delays-ms': parseDelayList(form.autoArchiveRetryDelaysMs),
+    })
 
-    const riotGamesFolder = (form.riotGamesFolderEnvVar || rgPath.length)
+    const riotGamesFolder =(form.riotGamesFolderEnvVar || rgPath.length)
         ? omitUndefined({
             relativeToEnvVar: form.riotGamesFolderEnvVar || undefined,
             path: rgPath.length ? rgPath : undefined,
@@ -165,6 +192,7 @@ function formToOverrides(form: FormState, effective: EffectiveConfig | undefined
         app: Object.keys(appConfig).length ? appConfig : undefined,
         'valorant-version-read': Object.keys(valorantVersionReadConfig).length ? valorantVersionReadConfig : undefined,
         'update-check': updateCheck,
+        'auto-archive': Object.keys(autoArchive).length ? autoArchive : undefined,
     })
     const filepaths = omitUndefined({
         'riot-games-folder': riotGamesFolder,
@@ -310,6 +338,7 @@ function LogLevelPicker({ value, onChange, disabled }: {
 export function ConfigPage() {
     const { data: effectiveConfig, isLoading: loadingEffective } = useEffectiveConfig()
     const { data: savedOverrides, isLoading: loadingOverrides } = useConfigOverrides()
+    const { data: appVersionInfo } = useAppVersion()
     const { mutate: saveOverrides, isPending: isSaving, isSuccess: saveSuccess, isError: saveError } = useSaveConfigOverrides()
     const { mutate: deleteOverrides, isPending: isDeleting } = useDeleteConfigOverrides()
 
@@ -340,6 +369,7 @@ export function ConfigPage() {
 
     const isLoading = loadingEffective || loadingOverrides
     const isBusy = isSaving || isDeleting
+    const retryDelaysValid = isValidDelayList(form.autoArchiveRetryDelaysMs)
 
     const eff = effectiveConfig as any
     const effRegion = eff?.overrides?.['valorant-api']?.region
@@ -350,8 +380,9 @@ export function ConfigPage() {
     const effRegex = eff?.configurations?.['valorant-version-read']?.regex
     const effLogging = effectiveConfig?.configurations?.app?.logging
     const effUpdateCheck = effectiveConfig?.configurations?.['update-check']
-    const cfgVersion = eff?.version?.config
-    const appVersion = eff?.version?.app
+    const effAutoArchive = effectiveConfig?.configurations?.['auto-archive']
+    const cfgVersion = appVersionInfo?.config
+    const appVersion = appVersionInfo?.app
 
     return (
         <div className="flex w-full flex-col gap-4">
@@ -386,7 +417,7 @@ export function ConfigPage() {
                             Reset to defaults
                         </Button>
                     </ConfirmDialog>
-                    <Button size="sm" onClick={handleSave} disabled={isBusy || isLoading || !isDirty}>
+                    <Button size="sm" onClick={handleSave} disabled={isBusy || isLoading || !isDirty || !retryDelaysValid}>
                         {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                         Save
                     </Button>
@@ -516,6 +547,39 @@ export function ConfigPage() {
                                 <span className="text-muted-foreground">/</span>
                                 <Input value={form.githubRepo} onChange={e => update('githubRepo', e.target.value)}
                                        placeholder="Repository" className="font-mono" disabled={isBusy} />
+                            </div>
+                        </FieldRow>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-card px-5 py-2">
+                        <p className="py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Auto-archive</p>
+                        <FieldRow label="Initial delay (ms)"
+                                  description="Milliseconds to wait after a match ends before the first save attempt."
+                                  effective={effAutoArchive ? String(effAutoArchive['initial-delay-ms']) : null}>
+                            <Input
+                                type="number" min={0} step={500}
+                                value={form.autoArchiveInitialDelayMs}
+                                onChange={e => update('autoArchiveInitialDelayMs', e.target.value)}
+                                placeholder="Default: 1000"
+                                className="font-mono"
+                                disabled={isBusy}
+                            />
+                        </FieldRow>
+                        <FieldRow label="Retry delays (ms)"
+                                  description="Comma-separated waits between failed save attempts. Each entry adds one retry."
+                                  effective={effAutoArchive ? formatDelayList(effAutoArchive['retry-delays-ms']) : null}>
+                            <div className="flex w-full flex-col gap-1.5">
+                                <Input
+                                    value={form.autoArchiveRetryDelaysMs}
+                                    onChange={e => update('autoArchiveRetryDelaysMs', e.target.value)}
+                                    placeholder="Default: 30000, 120000, 300000"
+                                    className="font-mono"
+                                    aria-invalid={!retryDelaysValid}
+                                    disabled={isBusy}
+                                />
+                                {!retryDelaysValid && (
+                                    <p className="text-xs text-destructive">Enter positive whole numbers separated by commas.</p>
+                                )}
                             </div>
                         </FieldRow>
                     </div>

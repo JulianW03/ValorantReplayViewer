@@ -49,4 +49,18 @@ describe('ConfigLoader', () => {
         expect(config.configurations.app.logging).toEqual(defaults.configurations.app.logging);
         expect(config.filepaths).toEqual(defaults.filepaths);
     });
+
+    it('keeps reporting the shipped app version after overrides change and the config is invalidated', async () => {
+        const shipped = (await loader.getStaticConfig()).version;
+        await loader.getAppVersion();
+
+        await writeFile(
+            loader.getConfigOverridesPath(),
+            JSON.stringify({ configurations: { app: { port: 4000 } } }),
+        );
+        loader.invalidate();
+
+        expect(await loader.getAppVersion()).toEqual(shipped);
+        expect((await loader.getEffectiveConfig()).version).toEqual(shipped);
+    });
 });

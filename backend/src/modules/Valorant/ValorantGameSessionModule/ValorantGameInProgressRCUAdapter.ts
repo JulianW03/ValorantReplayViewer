@@ -8,7 +8,7 @@ import { ForwardedMessage, TrieRCUMessageDispatcher } from '@/core/riotclient/me
 import { AnyPathPattern, parsePatternString } from '@/core/riotclient/messaging/path/PatternParser';
 import { RCUDataAdapter } from '@/core/data/adapters/RCUDataAdapter';
 import { MatchStatusSchema } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatus.schema';
-import type { GUID } from '#/schemas/GUIDSchema';
+import type { GUID } from '@vrv/shared';
 
 @Injectable()
 export class ValorantGameInProgressRCUAdapter extends RCUDataAdapter<ValorantGameSessionManager> {

@@ -1,4 +1,4 @@
-import { ReplayFileType, ReplayFileTypeSchema } from '#/schemas/upload/ImportReplay.schema';
+import { ReplayFileType, ReplayFileTypeSchema } from '@vrv/shared';
 import { ImportHandler } from '@/modules/Valorant/ValorantReplays/storage/import/ImportHandler';
 import { FullPackageImportHandler } from '@/modules/Valorant/ValorantReplays/storage/import/FullPackageImportHandler';
 import { MatchdataJsonImportHandler } from '@/modules/Valorant/ValorantReplays/storage/import/MatchdataJsonImportHandler';

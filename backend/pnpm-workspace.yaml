@@ -1,6 +1,6 @@
 packages:
   - "."
-  - "shared"
+  - "../shared"
 minimumReleaseAge: 10080
 allowBuilds:
   '@nestjs/core': true
@@ -8,3 +8,5 @@ allowBuilds:
   '@scarf/scarf': false
   better-sqlite3: true
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@openapitools/openapi-generator-cli@2.42.2'

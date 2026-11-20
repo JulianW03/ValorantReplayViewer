@@ -3,8 +3,7 @@ import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/Replay
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { ReplayInjectManagerV2 } from '@/modules/Valorant/ValorantReplays/injector/ReplayInjectManagerV2';
 import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
-import { type InjectStatus, InjectStatusSchema } from '#/schemas/InjectStatus.schema';
-import { type MatchIdParam, MatchIdParamSchema } from '#/schemas/replays/ReplayStorageApi.schema';
+import { type InjectStatus, InjectStatusSchema, type MatchIdParam, MatchIdParamSchema } from '@vrv/shared';
 
 class InjectStatusModel extends createZodDto(InjectStatusSchema) {
 }

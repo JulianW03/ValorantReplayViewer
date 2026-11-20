@@ -14,7 +14,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 import { truncateId } from './formatters';
 import { type ReplayRowButton, ReplayRowButtons } from './ReplayEntry';
-import type { ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema.ts';
+import type { ReplayMetadataV2 } from '@vrv/shared';
 import { useInjectReplay } from '@/hooks/useInjectReplay.ts';
 import { InjectTooltip } from '@/components/saved-replays/InjectTooltip.tsx';
 import { Button } from '@/components/ui/button.tsx';

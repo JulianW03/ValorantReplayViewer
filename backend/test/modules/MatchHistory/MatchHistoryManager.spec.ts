@@ -6,7 +6,7 @@ import { ValorantMatchStatsManager } from '@/modules/Valorant/ValorantMatchStats
 import { SimpleEventBus } from '@/core/events/SimpleEventBus';
 import { EventType } from '@/core/events/EventTypes';
 import * as rxjsAdapters from '@/core/events/adapters/rxjsAdapters';
-import { AsyncResult } from '#/utils/AsyncResult';
+import { AsyncResult } from '@vrv/shared';
 
 // We mock the adapter so we can push events into a Subject we control,
 // instead of needing a real SimpleEventBus wiring.

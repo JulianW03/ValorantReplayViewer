@@ -4,8 +4,7 @@ import {
     type MinimalMatchPlayer,
     type MinimalMatchTeam,
 } from '@/components/match-details/MatchDetailsPanel.tsx';
-import type { ReplayMetadataV2, RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
+import type { GUID, ReplayMetadataV2, RiotMatchMetadata } from '@vrv/shared';
 
 interface ReplayEntryDetailsProps {
     replay: ReplayMetadataV2;

@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ValorantAssetAPI } from '@/integrations/NotOfficer/ValorantAssetAPI';
 import { AssetResolverManager } from '@/modules/AssetResolving/common/AssetResolverManager';
-import { GUID } from '#/schemas/GUIDSchema';
-import { GearAssetDTO } from '#/schemas/assets/GearAssetDTO';
+import { GearAssetDTO, GUID } from '@vrv/shared';
 import { type AppConfig, InjectConfig } from '@/config/configLoader';
 
 export type GearId = GUID;

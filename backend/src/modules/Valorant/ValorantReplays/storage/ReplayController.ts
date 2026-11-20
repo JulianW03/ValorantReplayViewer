@@ -48,27 +48,26 @@ import {
 } from '@/modules/Valorant/ValorantReplays/storage/ReplayStorageErrors';
 import { parseIfMatch, toETag } from '@/modules/Valorant/ValorantReplays/storage/UserMetadataETag';
 import {
-    type ReplayMetadataV2,
-    ReplayMetadataV2Schema,
-    type UserMetadata,
-    UserMetadataSchema,
-} from '#/schemas/ReplayFormatV2.schema';
-import { type StorageStatusDTO, StorageStatusDTOSchema } from '#/schemas/StorageStatusDTO';
-import { ReplayImportSchema } from '#/schemas/upload/ImportReplay.schema';
-import {
     type DownloadStatesResponse,
     DownloadStatesResponseSchema,
     type ImportReplayQuery,
     ImportReplayQuerySchema,
     type MatchIdParam,
     MatchIdParamSchema,
+    ReplayImportSchema,
     type ReplayListQuery,
     ReplayListQuerySchema,
     type ReplayListResponse,
     ReplayListResponseSchema,
+    type ReplayMetadataV2,
+    ReplayMetadataV2Schema,
+    type StorageStatusDTO,
+    StorageStatusDTOSchema,
+    type UserMetadata,
     type UserMetadataPatch,
     UserMetadataPatchSchema,
-} from '#/schemas/replays/ReplayStorageApi.schema';
+    UserMetadataSchema,
+} from '@vrv/shared';
 
 class StorageStatusModel extends createZodDto(StorageStatusDTOSchema) {
 }

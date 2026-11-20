@@ -4,11 +4,13 @@ import { ConnectPage } from '@/pages/ConnectPage';
 import { RecentMatchesPage } from '@/pages/RecentMatchesPage';
 import { SavedReplaysPage } from '@/pages/SavedReplaysPage';
 import { InjectorPage } from '@/pages/InjectorPage';
+import { AutoArchivePage } from '@/pages/AutoArchivePage';
 import { ConfigPage } from '@/pages/ConfigPage';
 import { UpdateCheckPage } from '@/pages/UpdateCheckPage';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAgentRegistry, useMapRegistry } from '@/lib/queries';
 import { RequireSessionGuard } from '@/components/RequireSessionGuard.tsx';
+import { Toaster } from '@/components/ui/sonner';
 import MatchDetailsPage from '@/pages/MatchDetailsPage.tsx';
 
 const router = createHashRouter([
@@ -60,6 +62,13 @@ const router = createHashRouter([
                 ),
             },
             {
+                path: "auto-archive",
+                element: <AutoArchivePage />,
+                handle: {
+                    title: "Auto Archive",
+                },
+            },
+            {
                 path: "config",
                 element: <ConfigPage />,
                 handle: {
@@ -86,5 +95,10 @@ export default function App() {
     useMapRegistry();
     useAgentRegistry();
 
-    return <RouterProvider router={router} />;
+    return (
+        <>
+            <RouterProvider router={router} />
+            <Toaster />
+        </>
+    );
 }

@@ -1,6 +1,6 @@
 import { AsyncMapDataBehavior } from '@/core/data/behaviors/async/AsyncMapDataBehavior';
 import { SimpleMapDataManager } from '@/core/data/SimpleMapDataManager';
-import { AsyncResult, Success } from '#/utils/AsyncResult';
+import { AsyncResult, Success } from '@vrv/shared';
 import { TimeoutError } from '@/utils/PromiseUtils';
 import { beforeEach, describe, expect, it } from 'vitest';
 

@@ -8,7 +8,7 @@ import { AnyPathPattern, parsePatternString } from '@/core/riotclient/messaging/
 import type { RiotClientStateDispatcher } from '@/core/riotclient/RiotClientStateDispatcher';
 import { RCUDataAdapter } from '@/core/data/adapters/RCUDataAdapter';
 import { MatchStatusSchema } from '@/modules/Valorant/ValorantGameSessionModule/MatchStatus.schema';
-import { GUID } from '#/schemas/GUIDSchema';
+import { GUID } from '@vrv/shared';
 
 interface RMSMessage {
     ackRequired: boolean;

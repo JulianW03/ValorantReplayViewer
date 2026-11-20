@@ -8,8 +8,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "#/*": ["../backend/shared/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

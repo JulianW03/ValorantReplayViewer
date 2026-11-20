@@ -1,4 +1,4 @@
-import { AsyncResult } from '#/utils/AsyncResult';
+import { AsyncResult } from '@vrv/shared';
 import { IMapDataManager } from '@/core/data/interfaces/IMapDataManager';
 import { DataViewable } from '@/core/data/interfaces/capabilities/DataViewable';
 import { KeyDataViewable } from '@/core/data/interfaces/capabilities/KeyDataViewable';

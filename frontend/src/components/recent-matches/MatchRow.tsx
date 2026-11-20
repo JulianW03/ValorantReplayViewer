@@ -9,10 +9,15 @@ import { MatchStatsPanel } from './MatchStatsPanel';
 import { useAppStore } from '@/store/useAppStore';
 import { useRelativeTime } from '@/hooks/useRelativeTime.ts';
 import { OutdatedTag } from '@/components/OutdatedTag';
-import type { RiotMatchApiResponseDTO } from '#/schemas/RiotMatchApiReponseDTO.ts';
+import type { MatchPart, RiotMatchApiResponseDTO } from '@vrv/shared';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx';
 
 export const GRID_COLS = '7rem 6rem 1fr 8rem 6rem' as const;
+
+const PART_LABELS: Record<MatchPart, string> = {
+    stats: 'stats',
+    replay: 'replay',
+};
 
 function formatDate(millis: number): string {
     return new Date(millis).toLocaleString('en-US', {
@@ -27,7 +32,9 @@ interface DownloadButtonProps {
     canDownload: boolean;
     isDownloading: boolean;
     isFailed: boolean;
-    isDownloaded: boolean;
+    isComplete: boolean;
+    isPartial: boolean;
+    missingParts: MatchPart[];
     onDownload: () => void;
     onRetry: () => void;
 }
@@ -36,7 +43,9 @@ function DownloadButton({
                             canDownload,
                             isDownloading,
                             isFailed,
-                            isDownloaded,
+                            isComplete,
+                            isPartial,
+                            missingParts,
                             onDownload,
                             onRetry,
                         }: DownloadButtonProps) {
@@ -57,7 +66,7 @@ function DownloadButton({
         );
     }
 
-    if (isDownloaded) {
+    if (isComplete) {
         return (
             <Tooltip>
                 <TooltipTrigger>
@@ -104,7 +113,9 @@ function DownloadButton({
                 </Button>
             </TooltipTrigger>
             <TooltipContent>
-                Download match data
+                {isPartial
+                    ? `Download missing ${missingParts.map((part) => PART_LABELS[part]).join(' and ')}`
+                    : 'Download match data'}
             </TooltipContent>
         </Tooltip>
 
@@ -119,8 +130,8 @@ export function MatchRow({ match }: MatchRowProps) {
     const [isOpen, setIsOpen] = useState(false);
     const matchId = match.matchInfo.matchId;
 
-    const { canDownload, isDownloading, isFailed, isDownloaded } =
-        useDownloadStateFlags(matchId);
+    const { canDownload, isDownloading, isFailed, isComplete, isPartial, missingParts } =
+        useDownloadStateFlags(matchId, match.matchInfo);
 
     const { mutate: triggerDownload } = useTriggerDownload();
     const { mutate: retryDownload } = useRetryDownload();
@@ -196,7 +207,9 @@ export function MatchRow({ match }: MatchRowProps) {
                         canDownload={canDownload}
                         isDownloading={isDownloading}
                         isFailed={isFailed}
-                        isDownloaded={isDownloaded}
+                        isComplete={isComplete}
+                        isPartial={isPartial}
+                        missingParts={missingParts}
                         onDownload={() => triggerDownload(matchId)}
                         onRetry={() => retryDownload(matchId)}
                     />

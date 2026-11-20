@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ValorantAssetAPI } from '@/integrations/NotOfficer/ValorantAssetAPI';
 import { AssetResolverManager } from '@/modules/AssetResolving/common/AssetResolverManager';
-import { GUID } from '#/schemas/GUIDSchema';
-import { AgentAssetDTO } from '#/schemas/assets/AgentAssetDTO';
+import { AgentAssetDTO, GUID } from '@vrv/shared';
 import { type AppConfig, InjectConfig } from '@/config/configLoader';
 
 export type AgentId = GUID;

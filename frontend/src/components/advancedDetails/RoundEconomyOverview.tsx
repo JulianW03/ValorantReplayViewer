@@ -1,7 +1,6 @@
 import { formatCredits } from '@/lib/utils.ts';
 import { useAgentRegistry, useGearRegistry, useWeaponRegistry } from '@/lib/queries.ts';
-import { TWO_TEAM_ROLE_IDS, type TWO_TEAMS_ROLE_ID } from '#/schemas/RiotMatchApiReponseDTO.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
+import { type GUID, TWO_TEAM_ROLE_IDS, type TWO_TEAMS_ROLE_ID } from '@vrv/shared';
 
 export interface EconomyPlayerRow {
     subject: GUID;

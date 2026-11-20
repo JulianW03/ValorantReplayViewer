@@ -1,6 +1,6 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { InternalServerErrorException } from '@nestjs/common';
-import { AsyncResult, AsyncResultType, Failure, Pending, Success } from '#/utils/AsyncResult';
+import { AsyncResult, AsyncResultType, Failure, Pending, Success } from '@vrv/shared';
 
 // Apply decorators without modifying the core classes
 ApiProperty({
@@ -87,4 +87,4 @@ export const AsyncResultSchema = (payloadRef: string) => {
     };
 };
 
-export { AsyncResult, AsyncResultType, Pending, Success, Failure } from '#/utils/AsyncResult';
+export { AsyncResult, AsyncResultType, Pending, Success, Failure } from '@vrv/shared';

@@ -6,12 +6,7 @@ import { SimpleEventBus } from '@/core/events/SimpleEventBus';
 import { SimpleObjectDataManager } from '@/core/data/SimpleObjectDataManager';
 import { EmittingObjectDataBehavior } from '@/core/data/behaviors/emission/EmittingObjectDataBehavior';
 import { IObjectDataManager } from '@/core/data/interfaces/IObjectDataManager';
-import {
-    UnknownStatusReason,
-    UpdateInfo,
-    UpdateStatus,
-    UpdateStatusIndicator,
-} from '#/schemas/updateCheck/UpdateStatus.schema';
+import { UnknownStatusReason, UpdateInfo, UpdateStatus, UpdateStatusIndicator } from '@vrv/shared';
 
 const MinimalGithubReleaseAssetSchema = z.object({
     'name': z.string(),

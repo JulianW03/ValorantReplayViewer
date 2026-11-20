@@ -1,11 +1,11 @@
 import {
-    TWO_TEAM_IDS,
+    type GUID,
     type RiotMatchApiResponseDTO,
+    type RiotMatchMetadata,
     type RiotMatchPlayer,
+    TWO_TEAM_IDS,
     type TWO_TEAMS_TEAM_ID,
-} from '#/schemas/RiotMatchApiReponseDTO.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import type { RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
+} from '@vrv/shared';
 import { NamedStatsBlock, NamedStatsBlockSchema } from '@/lib/ScoringUtils.ts';
 import z from 'zod'
 

@@ -1,7 +1,6 @@
 import { ImportData, ImportHandler } from '@/modules/Valorant/ValorantReplays/storage/import/ImportHandler';
-import { ReplayMetadataV2, ReplayMetadataV2Schema } from '#/schemas/ReplayFormatV2.schema';
+import { ReplayFileTypeSchema, ReplayImportRequest, ReplayMetadataV2, ReplayMetadataV2Schema } from '@vrv/shared';
 import { InvalidReplayArchiveError } from '@/modules/Valorant/ValorantReplays/storage/ReplayStorageErrors';
-import { ReplayFileTypeSchema, ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema';
 import AdmZip from 'adm-zip';
 import { Logger } from '@nestjs/common';
 

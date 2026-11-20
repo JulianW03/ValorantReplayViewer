@@ -98,10 +98,17 @@ export const UpdateCheckOverridesSchema = z.object({
 });
 export type UpdateCheckerOverrides = z.infer<typeof UpdateCheckOverridesSchema>;
 
+export const AutoArchiveConfiguration = z.object({
+    'initial-delay-ms': z.number().int().nonnegative(),
+    'retry-delays-ms': z.array(z.number().int().positive()),
+});
+export type AutoArchiveConfiguration = z.infer<typeof AutoArchiveConfiguration>;
+
 export const Configurations = z.object({
     app: AppConfigurationConfig,
     'valorant-version-read': VersionReadConfiguration,
     'update-check': UpdateCheckOverridesSchema,
+    'auto-archive': AutoArchiveConfiguration,
 });
 export type Configurations = z.infer<typeof Configurations>;
 
@@ -147,6 +154,7 @@ export const OverridableConfigV1Schema = z
                 app: AppConfigurationConfig.partial().strict().optional(),
                 'valorant-version-read': VersionReadConfiguration.partial().strict().optional(),
                 'update-check': UpdateCheckOverridesSchema.strict().optional(),
+                'auto-archive': AutoArchiveConfiguration.partial().strict().optional(),
             })
             .strict()
             .optional(),

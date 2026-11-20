@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 import { ImportData, ImportHandler } from '@/modules/Valorant/ValorantReplays/storage/import/ImportHandler';
-import { ReplayFileTypeSchema, ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema';
-import { CURRENT_REPLAY_FORMAT_VERSION, ReplayMetadataV2 } from '#/schemas/ReplayFormatV2.schema';
+import {
+    CURRENT_REPLAY_FORMAT_VERSION,
+    ReplayFileTypeSchema,
+    ReplayImportRequest,
+    ReplayMetadataV2,
+} from '@vrv/shared';
 import { Logger } from '@nestjs/common';
 import { InvalidReplayArchiveError } from '@/modules/Valorant/ValorantReplays/storage/ReplayStorageErrors';
 

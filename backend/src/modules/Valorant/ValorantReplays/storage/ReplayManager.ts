@@ -2,30 +2,46 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
-import { AsyncResult } from '#/utils/AsyncResult';
+import {
+    AsyncResult,
+    availableParts,
+    CURRENT_REPLAY_FORMAT_VERSION,
+    DownloadStateDTO,
+    GUIDSchema,
+    ImportFlowId,
+    ImportFlowIdSchema,
+    isAnyDownloading,
+    MATCH_PARTS,
+    type MatchPart,
+    type MatchParts,
+    type MatchPartStates,
+    PaginationQuery,
+    PaginationResult,
+    PartDownloadState,
+    partsWhere,
+    ReplayImportRequest,
+    ReplayMetadataV2,
+    RiotMatchMetadata,
+    RiotMatchMetadataSchema,
+    selectedParts,
+    StorageStatusDTO,
+    toPartStates,
+    UserMetadata,
+    UserMetadataPatch,
+} from '@vrv/shared';
 import { SimpleEventBus } from '@/core/events/SimpleEventBus';
 import { IMapDataManager } from '@/core/data/interfaces/IMapDataManager';
 import { SimpleMapDataManager } from '@/core/data/SimpleMapDataManager';
 import { EmittingMapDataBehavior } from '@/core/data/behaviors/emission/EmittingMapDataBehavior';
 import { OuputMappingCachingMapBehavior } from '@/core/data/behaviors/viewMapping/OuputMappingCachingMapBehavior';
-import { DownloadState, DownloadStateDTO } from '#/schemas/DownloadState.schema';
-import { StorageStatusDTO } from '#/schemas/StorageStatusDTO';
-import {
-    CURRENT_REPLAY_FORMAT_VERSION,
-    ReplayMetadataV2,
-    RiotMatchMetadata,
-    RiotMatchMetadataSchema,
-    UserMetadata,
-} from '#/schemas/ReplayFormatV2.schema';
-import { UserMetadataPatch } from '#/schemas/replays/ReplayStorageApi.schema';
-import { ReplayImportRequest } from '#/schemas/upload/ImportReplay.schema';
-import { PaginationQuery, PaginationResult } from '#/schemas/Pagination.schema';
-import { GUIDSchema } from '#/schemas/GUIDSchema';
 import { getResolvedPath } from '@/config/ConfigV1.schema';
 import { type AppConfig, InjectConfig } from '@/config/configLoader';
 import { PuuidToPlayerAliasManager } from '@/modules/PuuidToPlayerAliasModule/PuuidToPlayerAliasManager';
 import { PathProviderService } from '@/modules/PathProvider/PathProviderService';
-import { ReplayFetchManager } from '@/modules/Valorant/ValorantReplays/remote/ReplayFetchManager';
+import {
+    type FetchedMatchMetadata,
+    ReplayFetchManager,
+} from '@/modules/Valorant/ValorantReplays/remote/ReplayFetchManager';
 import {
     DownloaderIdentity,
     FileRecord,
@@ -64,7 +80,7 @@ type ImportReplayError =
 @Injectable()
 export class ReplayManager implements OnModuleInit {
     protected readonly logger = new Logger(this.constructor.name);
-    protected readonly downloadStates: IMapDataManager<string, DownloadState, DownloadStateDTO>;
+    protected readonly downloadStates: IMapDataManager<string, MatchPartStates, DownloadStateDTO>;
     private readonly files: ReplayFileStore;
 
     constructor(
@@ -82,16 +98,19 @@ export class ReplayManager implements OnModuleInit {
         }
         this.files = new ReplayFileStore(replaysDir);
 
-        const base = new SimpleMapDataManager<string, DownloadState>();
-        const mapped = new OuputMappingCachingMapBehavior(base, (state: DownloadState): DownloadStateDTO => ({ state }));
+        const base = new SimpleMapDataManager<string, MatchPartStates>();
+        const mapped = new OuputMappingCachingMapBehavior(base, (parts: MatchPartStates): DownloadStateDTO => ({ parts }));
         this.downloadStates = new EmittingMapDataBehavior(mapped, eventBus, this.constructor.name);
     }
 
     onModuleInit(): void {
-        const stored = this.db.getAllStoredMatchIds();
+        const stored = this.db.getAllStoredMatchFileIds();
         if (stored.length > 0) {
             this.downloadStates.updateKeyValueBatch(
-                Object.fromEntries(stored.map(({ uuid }) => [uuid, DownloadState.DOWNLOADED])),
+                Object.fromEntries(stored.map(({ uuid, metadataFileUuid, replayFileUuid }) => [
+                    uuid,
+                    toPartStates({ stats: metadataFileUuid !== null, replay: replayFileUuid !== null }),
+                ])),
             );
         }
     }
@@ -125,30 +144,183 @@ export class ReplayManager implements OnModuleInit {
         return this.db.matchExists(matchId);
     }
 
-    async triggerDownload(matchId: string, retry = false): Promise<void> {
+    async triggerDownload(matchId: string, importFlowId: ImportFlowId, retry = false): Promise<void> {
         assertValidMatchId(matchId);
-        if (this.db.matchExists(matchId)) {
-            this.downloadStates.updateKeyValue(matchId, DownloadState.DOWNLOADED);
+        const stored = await this.getStoredParts(matchId);
+        const wanted = MATCH_PARTS.filter((part) => !stored?.[part]);
+        if (wanted.length === 0) {
+            await this.publishStoredState(matchId);
             return;
         }
 
-        const current = this.downloadStates.getKeyView(matchId)?.state;
-        if (current === DownloadState.DOWNLOADING) {
+        const current = this.getPartStates(matchId);
+        if (isAnyDownloading(current)) {
             throw new IllegalDownloadStateError(`Match ${matchId} is already downloading`);
         }
-        if (current === DownloadState.FAILED && !retry) {
+        if (!retry && wanted.some((part) => current?.[part] === PartDownloadState.FAILED)) {
             throw new IllegalDownloadStateError(`Download of match ${matchId} failed, retry explicitly`);
         }
 
-        this.downloadStates.updateKeyValue(matchId, DownloadState.DOWNLOADING);
         try {
-            const { metadata, replayBuffer } = await this.fetchManager.fetchCombinedReplayData(matchId);
-            await this.saveReplay(metadata, replayBuffer, false);
-            this.downloadStates.updateKeyValue(matchId, DownloadState.DOWNLOADED);
+            await this.downloadParts(
+                matchId,
+                wanted,
+                () => this.fetchManager.fetchMatchMetadata(matchId),
+                importFlowId,
+            );
         } catch (e) {
             this.logger.error(`Download of match ${matchId} failed`, e);
-            this.downloadStates.updateKeyValue(matchId, DownloadState.FAILED);
             throw e;
+        }
+    }
+
+    async archiveMatch(metadata: FetchedMatchMetadata, wanted: MatchParts): Promise<void> {
+        const matchId = metadata.uuid;
+        assertValidMatchId(matchId);
+
+        const missing = selectedParts(await this.findMissingParts(metadata, wanted));
+        if (missing.length === 0) {
+            return;
+        }
+        if (isAnyDownloading(this.getPartStates(matchId))) {
+            throw new IllegalDownloadStateError(`Match ${matchId} is already downloading`);
+        }
+
+        await this.downloadParts(matchId, missing, async () => metadata, ImportFlowIdSchema.enum.AUTO_ARCHIVE);
+    }
+
+    async findMissingParts(metadata: FetchedMatchMetadata, wanted: MatchParts): Promise<MatchParts> {
+        const stored = await this.getStoredParts(metadata.uuid);
+        const available = availableParts(metadata.riotMatchMetadata.matchMetadata.matchInfo);
+
+        return partsWhere((part) => wanted[part] && available[part] && !stored?.[part]);
+    }
+
+    /**
+     * Parts are stored in `MATCH_PARTS` order, so the stats land before the replay download starts and a replay that
+     * fails to download cannot lose them.
+     */
+    private async downloadParts(
+        matchId: string,
+        candidates: MatchPart[],
+        resolveMetadata: () => Promise<FetchedMatchMetadata>,
+        importFlowId: ImportFlowId,
+    ): Promise<void> {
+        this.setPartStates(matchId, candidates, PartDownloadState.DOWNLOADING);
+
+        let needed = candidates;
+        try {
+            const metadata = await resolveMetadata();
+            const wanted = partsWhere((part) => candidates.includes(part));
+            needed = selectedParts(await this.findMissingParts(metadata, wanted));
+            for (const part of needed) {
+                await this.addFilesToMatch(metadata, importFlowId, () => this.partWriters[part](metadata));
+                this.setPartStates(matchId, [part], PartDownloadState.STORED);
+            }
+            await this.settleParts(matchId, candidates, []);
+        } catch (e) {
+            await this.settleParts(matchId, candidates, needed);
+            throw e;
+        }
+    }
+
+    private readonly partWriters: Record<MatchPart, (metadata: FetchedMatchMetadata) => Promise<StoredFileRecords>> = {
+        stats: async (metadata) => ({
+            metadata: await this.files.write(
+                metadata.uuid,
+                RIOT_METADATA_FILE,
+                Buffer.from(JSON.stringify(metadata.riotMatchMetadata), 'utf-8'),
+            ),
+        }),
+        replay: async (metadata) => {
+            const replayBuffer = await this.fetchManager.fetchReplayFile(metadata.uuid);
+            return { replay: await this.files.write(metadata.uuid, `${metadata.uuid}.vrf`, replayBuffer) };
+        },
+    };
+
+    private async settleParts(matchId: string, candidates: MatchPart[], failed: MatchPart[]): Promise<void> {
+        const stored = await this.getStoredParts(matchId);
+        if (!stored && failed.length === 0) {
+            this.downloadStates.deleteKey(matchId);
+            return;
+        }
+
+        const settled = this.getPartStatesOrMissing(matchId);
+        for (const part of candidates) {
+            if (stored?.[part]) {
+                settled[part] = PartDownloadState.STORED;
+            } else {
+                settled[part] = failed.includes(part) ? PartDownloadState.FAILED : PartDownloadState.MISSING;
+            }
+        }
+        this.downloadStates.updateKeyValue(matchId, settled);
+    }
+
+    private getPartStates(matchId: string): MatchPartStates | undefined {
+        return this.downloadStates.getKeyView(matchId)?.parts;
+    }
+
+    private getPartStatesOrMissing(matchId: string): MatchPartStates {
+        return { ...(this.getPartStates(matchId) ?? toPartStates(partsWhere(() => false))) };
+    }
+
+    private setPartStates(matchId: string, parts: MatchPart[], state: PartDownloadState): void {
+        const next = this.getPartStatesOrMissing(matchId);
+        for (const part of parts) {
+            next[part] = state;
+        }
+        this.downloadStates.updateKeyValue(matchId, next);
+    }
+
+    /**
+     * Unlike `saveReplay`, this keeps what an existing entry already holds: `upsertReplay` leaves its tags alone, and
+     * a failed write must not remove the entry's folder.
+     */
+    private async addFilesToMatch(
+        metadata: FetchedMatchMetadata,
+        importFlowId: ImportFlowId,
+        writeFiles: () => Promise<StoredFileRecords>,
+    ): Promise<void> {
+        const matchId = metadata.uuid;
+        const isNewEntry = !this.db.matchExists(matchId);
+        const user = metadata.userMetadata ?? { name: defaultReplayName(matchId), tags: [], notes: null };
+        const userMetadata = { name: user.name, notes: user.notes ?? null };
+        const downloader = this.toDownloaderIdentity(metadata);
+
+        try {
+            const files = await writeFiles();
+            if (isNewEntry) {
+                this.db.upsertReplayWithTags(matchId, files, userMetadata, user.tags, importFlowId, downloader);
+            } else {
+                this.db.upsertReplay(matchId, files, userMetadata, importFlowId, downloader);
+            }
+        } catch (e) {
+            if (isNewEntry) {
+                await this.files.removeMatch(matchId);
+            }
+            throw e;
+        }
+    }
+
+    async getStoredParts(matchId: string): Promise<MatchParts | null> {
+        const files = this.db.getStoredFileRecord(matchId);
+        if (!files) {
+            return null;
+        }
+
+        const [metadataPath, replayPath] = await Promise.all([
+            this.files.existingPath(files.metadata),
+            this.files.existingPath(files.replay),
+        ]);
+        return { stats: metadataPath !== null, replay: replayPath !== null };
+    }
+
+    private async publishStoredState(matchId: string): Promise<void> {
+        const stored = await this.getStoredParts(matchId);
+        if (stored) {
+            this.downloadStates.updateKeyValue(matchId, toPartStates(stored));
+        } else {
+            this.downloadStates.deleteKey(matchId);
         }
     }
 
@@ -159,14 +331,14 @@ export class ReplayManager implements OnModuleInit {
     ): Promise<AsyncResult<ReplayMetadataV2, ImportReplayError>> {
         try {
             const { metadata, replayFile } = await forType(request.type, this.puuidManager).import(buffer, request);
-            if (this.downloadStates.getKeyView(metadata.uuid)?.state === DownloadState.DOWNLOADING) {
+            if (isAnyDownloading(this.getPartStates(metadata.uuid))) {
                 return AsyncResult.failure(
                     new IllegalDownloadStateError(`Match ${metadata.uuid} is currently downloading`),
                 );
             }
 
-            const stored = await this.saveReplay(metadata, replayFile, override);
-            this.downloadStates.updateKeyValue(metadata.uuid, DownloadState.DOWNLOADED);
+            const stored = await this.saveReplay(metadata, replayFile, override, ImportFlowIdSchema.enum.FILE_UPLOAD);
+            await this.publishStoredState(metadata.uuid);
             return AsyncResult.success(stored);
         } catch (e) {
             if (
@@ -286,6 +458,7 @@ export class ReplayManager implements OnModuleInit {
         metadata: ReplayMetadataV2,
         replayBuffer: Buffer | undefined,
         override: boolean,
+        importFlowId: ImportFlowId,
     ): Promise<ReplayMetadataV2> {
         const matchId = metadata.uuid;
         if (!GUIDSchema.safeParse(matchId).success) {
@@ -317,6 +490,7 @@ export class ReplayManager implements OnModuleInit {
                 files,
                 { name: user.name, notes: user.notes ?? null },
                 user.tags,
+                importFlowId,
                 this.toDownloaderIdentity(metadata),
             );
         } catch (e) {
@@ -352,6 +526,7 @@ export class ReplayManager implements OnModuleInit {
         return {
             formatVersion: CURRENT_REPLAY_FORMAT_VERSION,
             uuid: record.uuid,
+            importFlowId: record.importFlowId,
             downloaderMetadata: record.downloaderPuuid && record.downloadedAtS != null
                 ? { downloadedAt: record.downloadedAtS * 1000, downloaderId: record.downloaderPuuid }
                 : null,

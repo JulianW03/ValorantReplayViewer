@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import { InjectStates, type InjectStatus, type MatchStatsResult } from '@/lib/api';
+import { showAutoArchiveProgress } from '@/lib/autoArchiveNotifications';
 
-import type { DownloadStateDTO } from '#/schemas/DownloadState.schema.ts';
-import type { AgentAssetDTO } from '#/schemas/assets/AgentAssetDTO.ts';
-import type { MapAssetDTO } from '#/schemas/assets/MapAssetDTO.ts';
-import type { WeaponAssetDTO } from '#/schemas/assets/WeaponAssetDTO.ts';
-import type { GearAssetDTO } from '#/schemas/assets/GearAssetDTO.ts';
-import type { ProductSessionDTO } from '#/schemas/ProductSession.schema.ts';
-import type { PlayerAliasDTO } from '#/schemas/PlayerAlias.schema.ts';
-import type { PlayerUuidDTO } from '#/schemas/PlayerUuid.schema.ts';
-import type { MinimalVersionInfo } from '#/dto/MinimalVersionInfo.ts';
-import type { SocialPresence } from '#/schemas/SocialPresence/SocialPresence.schema.ts';
-import type { UpdateStatus } from '#/schemas/updateCheck/UpdateStatus.schema.ts';
+import type { AutoArchiveProgress } from '@vrv/shared';
+import type { DownloadStateDTO } from '@vrv/shared';
+import type { AgentAssetDTO } from '@vrv/shared';
+import type { MapAssetDTO } from '@vrv/shared';
+import type { WeaponAssetDTO } from '@vrv/shared';
+import type { GearAssetDTO } from '@vrv/shared';
+import type { ProductSessionDTO } from '@vrv/shared';
+import type { PlayerAliasDTO } from '@vrv/shared';
+import type { PlayerUuidDTO } from '@vrv/shared';
+import type { MinimalVersionInfo } from '@vrv/shared';
+import type { SocialPresence } from '@vrv/shared';
+import type { UpdateStatus } from '@vrv/shared';
 
 export type EventType =
     | 'StateUpdated'
@@ -236,6 +238,11 @@ export const useAppStore = create<AppState>((set) => {
                         break;
                     }
                 }
+            },
+
+            ReplayAutoArchiveManager: (event) => {
+                if (event.type !== 'KeyValueUpdated' || event.payload.value === null) return;
+                showAutoArchiveProgress(event.payload.key as string, event.payload.value as AutoArchiveProgress);
             },
 
             ValorantMatchStatsManager: (event) => {

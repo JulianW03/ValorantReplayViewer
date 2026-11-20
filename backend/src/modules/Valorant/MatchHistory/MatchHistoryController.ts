@@ -7,7 +7,7 @@ import {
     GetRecentMatchesDTOSchema,
 } from '@/modules/Valorant/MatchHistory/GetRecentMatches.schema';
 import { type GetNewMatchesDTO, GetNewMatchesDTOSchema } from '@/modules/Valorant/MatchHistory/GetNewMatches.schema';
-import { RiotMatchApiResponseDTOSchema } from '#/schemas/RiotMatchApiReponseDTO';
+import { RiotMatchApiResponseDTOSchema } from '@vrv/shared';
 import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
 
 class RiotMatchApiResponseDTOModel extends createZodDto(RiotMatchApiResponseDTOSchema) {

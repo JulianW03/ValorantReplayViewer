@@ -1,7 +1,7 @@
 import { LoggerService } from '@nestjs/common';
 import { MachineContext, MarkerEvent, MarkerState } from '@/core/logic/StateMachine';
 import { ReplayManager } from '@/modules/Valorant/ValorantReplays/storage/ReplayManager';
-import { InjectState, InjectStatus } from '#/schemas/InjectStatus.schema';
+import { ImportFlowIdSchema, InjectState, InjectStatus } from '@vrv/shared';
 
 export { InjectState, type InjectStatus };
 
@@ -170,7 +170,7 @@ export namespace ReplayStates {
 
         async onEnter(ctx: ReplayContext): Promise<void> {
             try {
-                await ctx.io.triggerDownload(this.replayInjectTarget);
+                await ctx.io.triggerDownload(this.replayInjectTarget, ImportFlowIdSchema.enum.INJECTION_PLACEHOLDER, true);
                 if (ctx.signal.aborted) return;
 
                 await ctx.io.moveToValorantDemos(this.replayInjectTarget);

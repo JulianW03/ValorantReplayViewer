@@ -8,7 +8,7 @@ import {
 } from '@/core/data/behaviors/viewMapping/OutputMappingRecomputingMapBehavior';
 import { EmittingMapDataBehavior } from '@/core/data/behaviors/emission/EmittingMapDataBehavior';
 import { MappingError } from '@/core/data/behaviors/viewMapping/MappingError';
-import { Social_Presence, SocialPresence, SocialPresenceSchema } from '#/schemas/SocialPresence/SocialPresence.schema';
+import { Social_Presence, SocialPresence, SocialPresenceSchema } from '@vrv/shared';
 
 export namespace MultigamePresence {
     export type ProductId = typeof Social_Presence.KNOWN_PRODUCTS[keyof typeof Social_Presence.KNOWN_PRODUCTS] | string;

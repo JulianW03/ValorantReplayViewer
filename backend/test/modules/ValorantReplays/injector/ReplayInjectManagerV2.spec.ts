@@ -6,8 +6,7 @@ import { MatchHistoryManager } from '@/modules/Valorant/MatchHistory/MatchHistor
 import { SimpleEventBus } from '@/core/events/SimpleEventBus';
 import { ValorantGameLoopManager } from '@/modules/Valorant/ValorantGameLoopModule/ValorantGameLoopManager';
 import { InjectState } from '@/modules/Valorant/ValorantReplays/injector/states/ReplayStates';
-import { AsyncResult } from '#/utils/AsyncResult';
-import { ReplayMetadataV2, RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema';
+import { AsyncResult, ReplayMetadataV2, RiotMatchMetadata } from '@vrv/shared';
 
 function replaySavedMetadata(hasReplayFile = true): AsyncResult<ReplayMetadataV2, Error> {
     if (hasReplayFile) return AsyncResult.success({
@@ -108,7 +107,7 @@ describe('ReplayInjectManagerV2', () => {
                 targetMatchId: 'match-1',
                 placeholderMatchId: 'placeholder-1',
             });
-            expect(io.triggerDownload).toHaveBeenCalledWith('placeholder-1');
+            expect(io.triggerDownload).toHaveBeenCalledWith('placeholder-1', 'INJECTION_PLACEHOLDER', true);
             expect(io.moveToValorantDemos).toHaveBeenCalledWith('placeholder-1');
         });
     });

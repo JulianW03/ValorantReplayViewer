@@ -1,6 +1,6 @@
 packages:
   - "."
-  - "../backend/shared"
+  - "../shared"
 minimumReleaseAge: 10080
 allowBuilds:
   msw: false

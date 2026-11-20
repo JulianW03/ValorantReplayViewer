@@ -8,15 +8,16 @@ import {
     RoundEconomyOverview,
 } from '@/components/advancedDetails/RoundEconomyOverview.tsx';
 import {
+    type GUID,
     type Kill,
+    type ReplayMetadataV2,
     type RiotMatchApiResponseDTO,
+    type RiotMatchMetadata,
     TWO_TEAM_IDS,
     TWO_TEAM_ROLE_IDS,
     type TWO_TEAMS_ROLE_ID,
     type TWO_TEAMS_TEAM_ID,
-} from '#/schemas/RiotMatchApiReponseDTO.ts';
-import type { GUID } from '#/schemas/GUIDSchema.ts';
-import type { ReplayMetadataV2, RiotMatchMetadata } from '#/schemas/ReplayFormatV2.schema.ts';
+} from '@vrv/shared';
 
 type RoundResult = RiotMatchApiResponseDTO["roundResults"][number]
 

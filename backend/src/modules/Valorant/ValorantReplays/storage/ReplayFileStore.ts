@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { GUIDSchema } from '#/schemas/GUIDSchema';
+import { GUIDSchema } from '@vrv/shared';
 import { isPathWithin } from '@/utils/PathUtils';
 import { FileRecord } from '@/modules/Valorant/ValorantReplays/storage/db/ReplayDBService';
 import { InvalidMatchIdError } from '@/modules/Valorant/ValorantReplays/storage/ReplayStorageErrors';

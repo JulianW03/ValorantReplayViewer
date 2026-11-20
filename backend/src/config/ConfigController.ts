@@ -15,16 +15,20 @@ import {
     ApiOperation,
 } from '@nestjs/swagger';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { ZodValidationPipe } from 'nestjs-zod';
+import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
+import { type AppVersion, AppVersionSchema } from '@vrv/shared';
 import {
     type EnvConfigV1DTO,
     type OverridableConfigV1,
     OverridableConfigV1Schema,
 } from '@/config/ConfigV1.schema';
-import { ConfigLoader } from '@/config/configLoader';
+import { ConfigLoader, InjectAppVersion } from '@/config/configLoader';
 
 const isNotFound = (e: unknown): boolean =>
     (e as NodeJS.ErrnoException)?.code === 'ENOENT';
+
+class AppVersionModel extends createZodDto(AppVersionSchema) {
+}
 
 @Controller({
     path: 'configuration',
@@ -33,7 +37,20 @@ const isNotFound = (e: unknown): boolean =>
 export class ConfigController {
     private readonly logger = new Logger(this.constructor.name);
 
-    constructor(private readonly loader: ConfigLoader) {
+    constructor(
+        private readonly loader: ConfigLoader,
+        @InjectAppVersion() private readonly appVersion: AppVersion,
+    ) {
+    }
+
+    @ApiOperation({
+        summary: 'Read the app version',
+        description: 'Resolved once at startup. Not affected by configuration overrides.',
+    })
+    @Get('version')
+    @ApiOkResponse({ type: AppVersionModel })
+    public getAppVersion(): AppVersion {
+        return this.appVersion;
     }
 
     @ApiOperation({

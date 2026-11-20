@@ -16,8 +16,7 @@ import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { RiotClientReadyGuard } from '@/core/riotclient/RiotClientReadyGuard';
 import { ValorantMatchStatsManager } from '@/modules/Valorant/ValorantMatchStatsModule/ValorantMatchStatsManager';
 import { ProductSessionGuard, RequiredProduct } from '@/modules/ProductSessionModule/ProductSessionGuard';
-import type { GUID } from '#/schemas/GUIDSchema';
-import { RiotMatchMetadataSchema } from '#/schemas/ReplayFormatV2.schema';
+import { type GUID, RiotMatchMetadataSchema } from '@vrv/shared';
 import { AsyncResultSchema, Failure, Pending, Success } from '@/utils/AsyncResultSwagger';
 import { createZodDto } from 'nestjs-zod';
 

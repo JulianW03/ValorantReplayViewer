@@ -4,6 +4,7 @@ import { and, asc, count, desc, eq, inArray, isNotNull, isNull, notInArray, sum 
 import { alias } from 'drizzle-orm/sqlite-core';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { groupBy } from 'lodash';
+import type { ImportFlowId } from '@vrv/shared';
 import { ReplayDBConnection } from '@/modules/Valorant/ValorantReplays/storage/db/ReplayDBConnection';
 
 export interface FileRecord {
@@ -43,6 +44,7 @@ export interface DownloaderIdentity {
 
 export interface StoredMatchRecord {
     uuid: string;
+    importFlowId: ImportFlowId | null;
     metadataFile: FileRecord | null;
     name: string | null;
     notes: string | null;
@@ -77,9 +79,13 @@ export class ReplayDBService {
         return this.connection.db;
     }
 
-    public getAllStoredMatchIds() {
+    public getAllStoredMatchFileIds() {
         return this.db
-            .select({ uuid: schema.replays.uuid })
+            .select({
+                uuid: schema.replays.uuid,
+                metadataFileUuid: schema.replays.metadata_file_uuid,
+                replayFileUuid: schema.replays.replay_file_uuid,
+            })
             .from(schema.replays)
             .all();
     }
@@ -178,6 +184,7 @@ export class ReplayDBService {
     private toRecord(row: MatchEntryRow, tagNames: string[]): StoredMatchRecord {
         return {
             uuid: row.replays.uuid,
+            importFlowId: row.replays.import_flow_id,
             metadataFile: row.metadataFile ? this.toFileRecord(row.metadataFile) : null,
             name: row.replayCustomizableData?.name ?? null,
             notes: row.replayCustomizableData?.notes ?? null,
@@ -298,9 +305,10 @@ export class ReplayDBService {
         matchId: string,
         files: StoredFileRecords,
         userMetadata: UserMetadataUpdate,
+        importFlowId: ImportFlowId,
         downloaderIdentity: DownloaderIdentity | null = null,
     ): void {
-        this.db.transaction((tx) => this.upsertReplayTx(tx, matchId, files, userMetadata, downloaderIdentity));
+        this.db.transaction((tx) => this.upsertReplayTx(tx, matchId, files, userMetadata, importFlowId, downloaderIdentity));
     }
 
     public syncTags(matchId: string, tagNames: string[]): void {
@@ -312,10 +320,11 @@ export class ReplayDBService {
         files: StoredFileRecords,
         userMetadata: UserMetadataUpdate,
         tagNames: string[],
+        importFlowId: ImportFlowId,
         downloaderIdentity: DownloaderIdentity | null = null,
     ): void {
         this.db.transaction((tx) => {
-            this.upsertReplayTx(tx, matchId, files, userMetadata, downloaderIdentity);
+            this.upsertReplayTx(tx, matchId, files, userMetadata, importFlowId, downloaderIdentity);
             this.syncTagsTx(tx, matchId, tagNames);
         });
     }
@@ -325,11 +334,13 @@ export class ReplayDBService {
         matchId: string,
         files: StoredFileRecords,
         userMetadata: UserMetadataUpdate,
+        importFlowId: ImportFlowId,
         downloaderIdentity: DownloaderIdentity | null,
     ): void {
         tx.insert(schema.replays)
             .values({
                 uuid: matchId,
+                import_flow_id: importFlowId,
                 downloaded_at_s: downloaderIdentity?.downloadedAtS,
                 downloader_puuid: downloaderIdentity?.downloaderPuuid,
             })

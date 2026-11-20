@@ -8,7 +8,7 @@ import {
     MatchOverviewHeader,
     type MatchOverviewHeaderProps,
 } from '@/components/advancedDetails/MatchOverviewHeader.tsx';
-import { type RiotMatchTeam, TWO_TEAM_IDS, type TWO_TEAMS_TEAM_ID } from '#/schemas/RiotMatchApiReponseDTO.ts';
+import { type RiotMatchTeam, TWO_TEAM_IDS, type TWO_TEAMS_TEAM_ID } from '@vrv/shared';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx';
 
 const TABS = {
